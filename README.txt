@@ -1,6 +1,8 @@
 1. Run "Exoplanet_json.py" to retrieve data from "https://exoplanetarchive.ipac.caltech.edu" and bild (or uptade) "Exoplanets_coordinates.txt" with distance and position data of every exoplanet discovered till now.
 
-2. Run "Exoplanets_in_the_Galaxy_3D.nb" to retrive data from "Exoplanets_coordinates.txt" and "Artist's_impression_of_the_Milky_Way_gna.jpg" to build a 3D illustration of the distribution of exaplanets discovered in our Galaxy.
+2. Run "Exoplanet_image.py" to retrive data from "Exoplanets_coordinates.txt" and "Artist's_impression_of_the_Milky_Way_gna2.jpg" to build a 2D illustration of the distribution of exaplanets discovered in our Galaxy.
+
+3. Run "Exoplanets_Place.html" to see the image in the browser.
 
 For exoplanet archive informations in retrieving data, see:
 
