@@ -5,7 +5,7 @@ import math
 
 # Defining the url---------------------------------------------------
 #--------------------------------------------------------------------
-serviceurl = "https://exoplanetarchive.ipac.caltech.edu/"
+service_url = "https://exoplanetarchive.ipac.caltech.edu/"
 
 # Ignore SSL certificate errors
 ctx = ssl.create_default_context()
@@ -14,7 +14,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 address = input("Enter url (Type Enter to go with the default url): ")
 if len(address) < 1: #break
-    address = serviceurl
+    address = service_url
 
 querytap = "/TAP/sync?query="
 
@@ -22,7 +22,7 @@ query = input("Enter query (Type Enter to go with the default query): ")
 if len(query) < 1: #break
     query = "select+sy_dist,glat,glon+from+pscomppars&format=json"
 
-url = serviceurl + querytap + query
+url = service_url + querytap + query
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
@@ -45,7 +45,7 @@ glon = list()
 for item in js :
     try : # Some distances are "none" and not of our interest (and they will break the appending)
         sy_dist.append(float(item["sy_dist"]))
-        glat .append(float(item["glat"]))
+        glat.append(float(item["glat"]))
         glon.append(float(item["glon"]))
     except :
         continue
