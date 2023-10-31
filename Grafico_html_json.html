@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>3D Exoplanets with Milky Way Texture</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <script>
+        
+        // Initialize scene and camera
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100000);
+        camera.position.z = 100000;
+
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Load exoplanet coordinates from a JSON file
+        fetch('Exoplanets_coordinates.json')
+            .then(response => response.json())
+            .then(data => {
+                data.forEach(point => {
+                    const [x, y, z] = point;
+                    const geometry = new THREE.SphereGeometry(500); // Size of each point
+                    const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 }); // Color green
+                    const sphere = new THREE.Mesh(geometry, material);
+                    sphere.position.set(x, y, z);
+                    scene.add(sphere);
+                });
+                console.log(data);
+            });
+
+        // Load Milky Way texture
+        const loader = new THREE.TextureLoader();
+        loader.load('MWtransparent.png', texture => {
+            const geometry = new THREE.PlaneGeometry(136000, 136000); // Size of the plane
+            const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true });
+            const plane = new THREE.Mesh(geometry, material);
+            scene.add(plane);
+        });
+        console.log(texture);
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+    </script>
+</body>
+</html>
