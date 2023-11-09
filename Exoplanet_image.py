@@ -35,8 +35,7 @@ for i in range(len(Xly)) :
     Zpx.append(1000 * (Zly[i]/68000) + 1000)
 
 # Load the image
-image = Image.open("MWtransparent.png")
-image2 = Image.open("MWtransparent.png")
+image = Image.open("Artist's_impression_of_the_Milky_Way_gna2.jpg")
 
 # Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
@@ -55,8 +54,8 @@ for dot in range(len(Xpx)):
 
 # Writing in exit file-----------------------------------------------
 #--------------------------------------------------------------------
-print('Saving: MWtransparent_dots.png')
+print('Saving: MW_dots.jpg')
 
-image.save("MWtransparent_dots.png")
+image.save("MW_dots.jpg")
 
 print('Done')
