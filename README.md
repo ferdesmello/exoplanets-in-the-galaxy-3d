@@ -5,7 +5,7 @@
 
 ## 2.
 **Run "[Exoplanet_image.py](/Exoplanet_image.py)"** to retrieve data from "[Exoplanets_coordinates.txt](/Exoplanets_coordinates.txt)" and "[Artist's_impression_of_the_Milky_Way_gna2.jpg](/Artist's_impression_of_the_Milky_Way_gna2.jpg)" to build a 2D illustration of the distribution of exaplanets discovered in our Galaxy in the "[MWtransparent_dots](/MWtransparent_dots)".
-![Representation of the positions of the discovered exoplanets in our Galaxy.](/MWtransparent_dots)
+![Representation of the positions of the discovered exoplanets in our Galaxy.](/MWtransparent_dots.png)
 
 ## 3.
 ~~**Run "[Exoplanets_Place.html](/Exoplanets_Place.html)"** to see the image in the browser.~~
