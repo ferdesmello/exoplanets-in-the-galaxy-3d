@@ -42,13 +42,21 @@ sy_dist = list()
 glat = list()
 glon = list()
 
+count_exoplanets_distance = 0
+count_exoplanets_others = 0
 for item in js :
     try : # Some distances are "none" and not of our interest (and they will break the appending)
         sy_dist.append(float(item["sy_dist"]))
         glat.append(float(item["glat"]))
         glon.append(float(item["glon"]))
+        count_exoplanets_distance += 1
     except :
+        count_exoplanets_others += 1
         continue
+
+exoplanets = count_exoplanets_distance + count_exoplanets_others
+print(f"Number of exoplanets discovered: {exoplanets}")
+print(f"Number of exoplanets with distance determined: {count_exoplanets_distance}")
 
 # Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
