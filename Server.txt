@@ -1,2 +1,4 @@
-L:\Git\exoplanets-in-the-galaxy-3d
+cd L:\Git\exoplanets-in-the-galaxy-3d
 python -m http.server 8000
+http://127.0.0.1:8000/
+Ctrl+C

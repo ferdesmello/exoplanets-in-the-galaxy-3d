@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Galactic Exoplanet Distribution</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+        #legend { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.8); padding: 10px; color: white; font-family: Arial, sans-serif; }
+        #legend h3 { margin: 0 0 10px 0; }
+        #legend ul { list-style: none; padding: 0; margin: 0; }
+        #legend li { margin: 5px 0; }
+        #legend input[type="checkbox"] { margin-right: 5px; }
+    </style>
+</head>
+<body>
+    <div id="legend">
+        <h3>Detection methods</h3>
+        <ul id="legend-list">
+            <!-- Add the "All" checkbox -->
+            <li>
+                <label>
+                    <input type="checkbox" id="all-checkbox" checked>
+                    <span style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
+                    All
+                </label>
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    //-------------------------------------------------------------------------------
+    <script>
+        let scene, camera, renderer, controls;
+
+        // Configuration
+        const config = {
+            galaxySize: 136000,
+            pointSize: 100.0,
+            rotationSpeed: 0.005
+        };
+
+        // Define colors for each method
+        const methodColors = {
+            "Transit": 0xff0000, // Red
+            "Radial Velocity": 0x00ff00, // Green
+            "Microlensing": 0x0000ff, // Blue 
+            "Imaging": 0xffff00, // Yellow,
+            "Transit Timing Variations": 0xff00ff, // Purple, 
+            "Eclipse Timing Variations": 0xff00ff, //  
+            "Orbital Brightness Modulation": 0xff00ff, // 
+            "Pulsar Timing": 0xff00ff, // 
+            "Astrometry": 0xff00ff, //  
+            "Pulsation Timing Variations": 0xff00ff, //  
+            "Disk Kinematics": 0xff00ff // 
+        };
+
+        // Store points objects for each method
+        const methodPoints = {};
+
+        // Store original materials for each method
+        const originalMaterials = {};
+
+        init();
+        animate();
+
+        //-------------------------------------------------------------------------------
+        async function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            document.getElementById('all-checkbox').addEventListener('change', toggleAllExoplanets);
+
+            // Camera position
+            camera.position.set(0, 50000, 50000); 
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.minDistance = 100; // Minimum zoom distance
+            controls.maxDistance = 500000; // Maximum zoom distance
+
+            // Add galaxy plane
+            createGalaxyPlane();
+            
+            // Load and plot exoplanets
+            await loadExoplanets();
+
+            // Add Galactic North marker
+            addGalacticNorthMarker();
+            
+            // Add interactive legend
+            createLegend();
+
+            // Initialize "All" checkbox state
+            const allCheckbox = document.getElementById('all-checkbox');
+            allCheckbox.checked = true; // Start with "All" checked
+            toggleAllExoplanets({ target: allCheckbox }); // Force update
+        }
+
+        //-------------------------------------------------------------------------------
+        function createGalaxyPlane() {
+            // Create galaxy plane with PNG texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load('MWtransparent.png', (texture) => {
+                const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 1.0,
+                    side: THREE.DoubleSide,
+                    color: new THREE.Color(1.0, 1.0, 1.0)
+                    //depthWrite: false // Prevents the galaxy plane from affecting depth buffer
+
+                });
+                
+                galaxyPlane = new THREE.Mesh(geometry, material);
+                galaxyPlane.rotation.x = -Math.PI / 2;
+                //galaxyPlane.renderOrder = 0; // Ensures it renders before everything else
+                scene.add(galaxyPlane);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        async function loadExoplanets() {
+            const response = await fetch('Exoplanets_coordinates_methods.json');
+            const data = await response.json();
+
+            // Group data by method
+            const groupedData = {};
+            data.forEach((exoplanet) => {
+                const method = exoplanet[3]; // Fourth column is the method
+                if (!groupedData[method]) {
+                    groupedData[method] = [];
+                }
+                groupedData[method].push(exoplanet);
+            });
+
+            // Create spheres for each method
+            for (const [method, points] of Object.entries(groupedData)) {
+                const geometry = new THREE.BufferGeometry();
+                const vertices = [];
+
+                points.forEach((exoplanet) => {
+                    vertices.push(exoplanet[0], exoplanet[2], -exoplanet[1]);
+                });
+
+                const verticesArray = new Float32Array(vertices);
+                geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+
+                const circularTexture = createCircularTexture();
+
+                const material = new THREE.PointsMaterial({
+                    color: methodColors[method],
+                    size: 50, // Adjust point size
+                    map: circularTexture, // Apply texture
+                    transparent: true, // Keep background transparent
+                    alphaTest: 0.5, // Avoid rendering square edges
+                });
+
+                const pointCloud = new THREE.Points(geometry, material);
+                scene.add(pointCloud);
+
+                // Store for toggling
+                methodPoints[method] = pointCloud;
+            }
+        }
+
+        //-------------------------------------------------------------------------------
+        function createLegend() {
+            const legendList = document.getElementById('legend-list');
+
+            for (const [method, color] of Object.entries(methodColors)) {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="method-checkbox" checked data-method="${method}">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #${color.toString(16).padStart(6, '0')}; margin-right: 5px;"></span>
+                        ${method}
+                    </label>
+                `;
+                legendList.appendChild(listItem);
+
+                const checkbox = listItem.querySelector('input');
+                checkbox.addEventListener('change', (event) => {
+                    const method = event.target.dataset.method;
+                    if (methodPoints[method]) {
+                        methodPoints[method].visible = event.target.checked;
+                    }
+                });
+            }
+        }
+
+        //-------------------------------------------------------------------------------
+        function toggleAllExoplanets(event) {
+            const allChecked = event.target.checked;
+            const methodCheckboxes = document.querySelectorAll('.method-checkbox');
+
+            for (const [method, pointCloud] of Object.entries(methodPoints)) {
+                if (allChecked) {
+                    pointCloud.material.color.set(0xffffff); // Set all points to white
+                    pointCloud.visible = true;
+                } else {
+                    pointCloud.material.color.set(methodColors[method]); // Restore original color
+                    pointCloud.visible = document.querySelector(`.method-checkbox[data-method="${method}"]`).checked;
+                }
+            }
+
+            // Enable/disable method checkboxes
+            methodCheckboxes.forEach((checkbox) => {
+                checkbox.disabled = allChecked;
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        function addGalacticNorthMarker() {
+            // Create canvas and draw the "N"
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
+            
+            // Draw the letter "N"
+            context.fillStyle = 'white';
+            context.font = 'bold 100px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('N', canvas.width / 2, canvas.height / 2);
+            
+            // Create a texture from the canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+
+            sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
+            sprite.position.set(0, 30000, 0); // Position at Galactic North
+
+            scene.add(sprite);
+        }
+
+        //-------------------------------------------------------------------------------
+        function createCircularTexture() {
+            const size = 128; // Texture resolution
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff'; // White circle
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        //-------------------------------------------------------------------------------
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        //-------------------------------------------------------------------------------
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
+</body>
+</html>
