@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
+    //-------------------------------------------------------------------------------
     <script>
         let scene, camera, renderer, controls;
         let galaxyPlane, exoplanets = [];
@@ -25,6 +26,7 @@
         init();
         animate();
 
+        //-------------------------------------------------------------------------------
         async function init() {
             // Scene setup
             scene = new THREE.Scene();
@@ -51,10 +53,11 @@
             addGalacticNorthMarker();
         }
 
+        //-------------------------------------------------------------------------------
         function createGalaxyPlane() {
             // Create galaxy plane with PNG texture
             const textureLoader = new THREE.TextureLoader();
-            textureLoader.load('MWtransparent.png', (texture) => {
+            textureLoader.load('MW_transparent_small.png', (texture) => {
                 const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
@@ -70,6 +73,7 @@
             });
         }
 
+        //-------------------------------------------------------------------------------
         async function loadExoplanets() {
             const response = await fetch('Exoplanets_coordinates.json');
             const data = await response.json();
@@ -91,6 +95,7 @@
             });
         }
 
+        //-------------------------------------------------------------------------------
         function addGalacticNorthMarker() {
             // Create canvas and draw the "N"
             const canvas = document.createElement('canvas');

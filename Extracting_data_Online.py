@@ -21,9 +21,10 @@ querytap = "/TAP/sync?query="
 
 query = input("Enter query (Type Enter to go with the default query): ")
 if len(query) < 1: #break
-    query = "select+sy_dist,glat,glon,discoverymethod+from+pscomppars&format=json"
+    query = "select+sy_dist,glat,glon,discoverymethod"
+    ending = "+from+pscomppars&format=json"
 
-url = service_url + querytap + query
+url = service_url + querytap + query + ending
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
@@ -117,4 +118,5 @@ for item in range(len(sy_dist)) :
 
 fout.close()
 
+#--------------------------------------------------------------------
 print("Done")

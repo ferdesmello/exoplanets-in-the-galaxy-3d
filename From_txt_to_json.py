@@ -33,6 +33,9 @@ for line in lines:
     else:
         print(f"Skipping line due to incorrect number of fields: {line.strip()}") #report errors and skip.
 
+# Add the Solar System
+data2.append([float(-26000.0), float(0.0), float(0.0), "Sun"])
+
 # Write the data to a JSON file
 with open("Exoplanets_coordinates_methods.json", "w") as f:
     json.dump(data2, f, indent=4) #using indent=4 for better readability

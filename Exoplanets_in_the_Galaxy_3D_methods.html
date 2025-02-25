@@ -43,17 +43,18 @@
 
         // Define colors for each method
         const methodColors = {
-            "Transit": 0xff0000, // Red
-            "Radial Velocity": 0x00ff00, // Green
-            "Microlensing": 0x0000ff, // Blue 
-            "Imaging": 0xffff00, // Yellow,
-            "Transit Timing Variations": 0xff00ff, // Purple, 
-            "Eclipse Timing Variations": 0xff00ff, //  
-            "Orbital Brightness Modulation": 0xff00ff, // 
-            "Pulsar Timing": 0xff00ff, // 
-            "Astrometry": 0xff00ff, //  
-            "Pulsation Timing Variations": 0xff00ff, //  
-            "Disk Kinematics": 0xff00ff // 
+            "Transit": 0xe74c3c, // Red
+            "Radial Velocity": 0x27ae60, // Green
+            "Microlensing": 0x3498db, // Blue
+            "Imaging": 0xf39c12, // Orange
+            "Transit Timing Variations": 0x8e44ad, // Purple
+            "Eclipse Timing Variations": 0x922b21 , // Brown
+            "Orbital Brightness Modulation": 0xaf601a , // Dark orange
+            "Pulsar Timing": 0xfdfefe , // White
+            "Astrometry": 0x1a5276, // Dark blue
+            "Pulsation Timing Variations": 0x0e6655, // Dark green
+            "Disk Kinematics": 0x616a6b, // Grey
+            "Sun": 0xf1c40f // Yellow
         };
 
         // Store points objects for each method
@@ -81,8 +82,8 @@
             // Controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.minDistance = 100; // Minimum zoom distance
+            controls.dampingFactor = 0.5;
+            controls.minDistance = 50; // Minimum zoom distance
             controls.maxDistance = 500000; // Maximum zoom distance
 
             // Add galaxy plane
@@ -107,7 +108,7 @@
         function createGalaxyPlane() {
             // Create galaxy plane with PNG texture
             const textureLoader = new THREE.TextureLoader();
-            textureLoader.load('MWtransparent.png', (texture) => {
+            textureLoader.load('MW_transparent.png', (texture) => {
                 const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
@@ -115,13 +116,10 @@
                     opacity: 1.0,
                     side: THREE.DoubleSide,
                     color: new THREE.Color(1.0, 1.0, 1.0)
-                    //depthWrite: false // Prevents the galaxy plane from affecting depth buffer
-
                 });
                 
                 galaxyPlane = new THREE.Mesh(geometry, material);
                 galaxyPlane.rotation.x = -Math.PI / 2;
-                //galaxyPlane.renderOrder = 0; // Ensures it renders before everything else
                 scene.add(galaxyPlane);
             });
         }
@@ -157,8 +155,8 @@
 
                 const material = new THREE.PointsMaterial({
                     color: methodColors[method],
-                    size: 50, // Adjust point size
-                    map: circularTexture, // Apply texture
+                    size: 100, // Adjust point size
+                    alphaMap: circularTexture, // Apply texture
                     transparent: true, // Keep background transparent
                     alphaTest: 0.5, // Avoid rendering square edges
                 });
@@ -203,7 +201,7 @@
 
             for (const [method, pointCloud] of Object.entries(methodPoints)) {
                 if (allChecked) {
-                    pointCloud.material.color.set(0xffffff); // Set all points to white
+                    pointCloud.material.color.set(0x58d68d); // Set all points to green
                     pointCloud.visible = true;
                 } else {
                     pointCloud.material.color.set(methodColors[method]); // Restore original color

@@ -1,7 +1,4 @@
 from PIL import Image, ImageDraw
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
-import numpy as np
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
@@ -35,16 +32,17 @@ for i in range(len(Xly)) :
     Zpx.append(1000 * (Zly[i]/68000) + 1000)
 
 # Load the image
-image = Image.open("Artist's_impression_of_the_Milky_Way_gna2.jpg")
+image = Image.open("Artist's_impression_of_the_Milky_Way_gna_small.jpg")
 
 # Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
 # Create a new image object for drawing
 print('Operating')
 
+image = image.rotate(-90, expand=True)
 draw = ImageDraw.Draw(image)
 
-# Draw a red dot at each coordinate
+# Draw a green dot at each coordinate
 for dot in range(len(Xpx)):
     draw.ellipse((Xpx[dot] - 2, 
                   Ypx[dot] - 2, 
