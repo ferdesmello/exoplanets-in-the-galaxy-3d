@@ -1,56 +1,348 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loading Exoplanets 3D</title>
-    <!--
-        This meta tag automatically redirects the browser to
-        'exoplanets_in_the_galaxy_3D_methods.html' after a 0-second delay.
-        The 'content' attribute specifies the delay in seconds and the URL to redirect to.
-        '0; url=' means immediately redirect to the specified URL.
-    -->
-    <meta http-equiv="refresh" content="0; url=exoplanets_in_the_galaxy_3D_methods.html">
+    <title>Galactic Exoplanet Distribution</title>
     <style>
-        /* Optional: Basic styling to make the loading page look decent */
         body {
-            font-family: 'Inter', sans-serif; /* Using Inter font as per guidelines */
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
-            background-color: #f0f4f8; /* Light background */
-            color: #334155; /* Dark gray text */
         }
-        .container {
-            text-align: center;
-            padding: 2rem;
-            background-color: #ffffff;
-            border-radius: 0.75rem; /* Rounded corners */
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+
+        canvas {
+            display: block;
         }
-        h1 {
-            color: #1e293b;
-            margin-bottom: 1rem;
+
+        #main-title {
+            position: absolute;
+            top: 10px;
+            /* Distance from the top */
+            left: 10px;
+            /* Distance from the left */
+            background: rgba(0, 0, 0, 0.8);
+            /* Semi-transparent black background */
+            padding: 15px;
+            /* Spacing inside the box */
+            color: white;
+            /* Text color */
+            font-family: Arial, sans-serif;
+            z-index: 10;
+            /* Ensures it's above the canvas and other elements */
+            border-radius: 8px;
+            /* Slightly rounded corners */
         }
-        p {
-            font-size: 1.125rem;
+
+        #main-title h1 {
+            margin: 0 0 10px 0;
+            /* Adjust heading margin */
+            font-size: 2em;
+            /* Adjust heading size */
         }
-        a {
-            color: #3b82f6; /* A nice blue for links */
-            text-decoration: none;
-            font-weight: 500;
+
+        #main-title p {
+            margin: 0;
+            /* Remove paragraph default margin */
+            font-size: 1.1em;
+            /* Adjust paragraph size */
+            line-height: 1.5;
         }
-        a:hover {
-            text-decoration: underline;
+
+        #legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            border-radius: 8px;
+            /* Consistency with the title box */
+        }
+
+        #legend h3 {
+            margin: 0 0 10px 0;
+        }
+
+        #legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #legend li {
+            margin: 5px 0;
+        }
+
+        #legend input[type="checkbox"] {
+            margin-right: 5px;
         }
     </style>
 </head>
+
 <body>
-    <div class="container">
-        <h1>Loading your Exoplanets 3D experience...</h1>
-        <p>If you are not redirected automatically, <a href="exoplanets_in_the_galaxy_3D_methods.html">click here to proceed</a>.</p>
+    <div id="main-title">
+        <h1>Distribution of Exoplanets Discovered in Our Galaxy</h1>
+        <p>An interactive visualization of exoplanets by detection method.</p>
     </div>
+
+    <div id="legend">
+        <h3>Detection methods</h3>
+        <ul id="legend-list">
+            <li>
+                <label>
+                    <input type="checkbox" id="all-checkbox" checked>
+                    <span
+                        style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
+                    All
+                </label>
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <script>
+        let scene, camera, renderer, controls;
+
+        // Configuration
+        const config = {
+            galaxySize: 136000,
+            pointSize: 100.0,
+            rotationSpeed: 0.005
+        };
+
+        // Define colors for each method
+        const methodColors = {
+            "Transit": 0xe74c3c, // Red
+            "Radial Velocity": 0x27ae60, // Green
+            "Microlensing": 0x3498db, // Blue
+            "Imaging": 0xf39c12, // Orange
+            "Transit Timing Variations": 0x8e44ad, // Purple
+            "Eclipse Timing Variations": 0x922b21, // Brown
+            "Orbital Brightness Modulation": 0xaf601a, // Dark orange
+            "Pulsar Timing": 0xfdfefe, // White
+            "Astrometry": 0x1a5276, // Dark blue
+            "Pulsation Timing Variations": 0x0e6655, // Dark green
+            "Disk Kinematics": 0x616a6b, // Grey
+            "Sun": 0xf1c40f // Yellow
+        };
+
+        // Store points objects for each method
+        const methodPoints = {};
+
+        // Store original materials for each method
+        const originalMaterials = {};
+
+        init();
+        animate();
+
+        //-------------------------------------------------------------------------------
+        async function init() {
+            // Scene setup
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000000);
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.body.appendChild(renderer.domElement);
+            document.getElementById('all-checkbox').addEventListener('change', toggleAllExoplanets);
+
+            // Camera position
+            camera.position.set(0, 50000, 50000);
+
+            // Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.5;
+            controls.minDistance = 50; // Minimum zoom distance
+            controls.maxDistance = 500000; // Maximum zoom distance
+
+            // Add galaxy plane
+            createGalaxyPlane();
+
+            // Load and plot exoplanets
+            await loadExoplanets();
+
+            // Add Galactic North marker
+            addGalacticNorthMarker();
+
+            // Add interactive legend
+            createLegend();
+
+            // Initialize "All" checkbox state
+            const allCheckbox = document.getElementById('all-checkbox');
+            allCheckbox.checked = true; // Start with "All" checked
+            toggleAllExoplanets({ target: allCheckbox }); // Force update
+        }
+
+        //-------------------------------------------------------------------------------
+        function createGalaxyPlane() {
+            // Create galaxy plane with PNG texture
+            const textureLoader = new THREE.TextureLoader();
+            textureLoader.load('MW_transparent.png', (texture) => {
+                const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
+                const material = new THREE.MeshBasicMaterial({
+                    map: texture,
+                    transparent: true,
+                    opacity: 1.0,
+                    side: THREE.DoubleSide,
+                    color: new THREE.Color(1.0, 1.0, 1.0)
+                });
+
+                galaxyPlane = new THREE.Mesh(geometry, material);
+                galaxyPlane.rotation.x = -Math.PI / 2;
+                scene.add(galaxyPlane);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        async function loadExoplanets() {
+            const response = await fetch('Exoplanets_coordinates_methods.json');
+            const data = await response.json();
+
+            // Group data by method
+            const groupedData = {};
+            data.forEach((exoplanet) => {
+                const method = exoplanet[3]; // Fourth column is the method
+                if (!groupedData[method]) {
+                    groupedData[method] = [];
+                }
+                groupedData[method].push(exoplanet);
+            });
+
+            // Create spheres for each method
+            for (const [method, points] of Object.entries(groupedData)) {
+                const geometry = new THREE.BufferGeometry();
+                const vertices = [];
+
+                points.forEach((exoplanet) => {
+                    vertices.push(exoplanet[0], exoplanet[2], -exoplanet[1]);
+                });
+
+                const verticesArray = new Float32Array(vertices);
+                geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+
+                const circularTexture = createCircularTexture();
+
+                const material = new THREE.PointsMaterial({
+                    color: methodColors[method],
+                    size: 100, // Adjust point size
+                    alphaMap: circularTexture, // Apply texture
+                    transparent: true, // Keep background transparent
+                    alphaTest: 0.5, // Avoid rendering square edges
+                });
+
+                const pointCloud = new THREE.Points(geometry, material);
+                scene.add(pointCloud);
+
+                // Store for toggling
+                methodPoints[method] = pointCloud;
+            }
+        }
+
+        //-------------------------------------------------------------------------------
+        function createLegend() {
+            const legendList = document.getElementById('legend-list');
+
+            for (const [method, color] of Object.entries(methodColors)) {
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <label>
+                        <input type="checkbox" class="method-checkbox" checked data-method="${method}">
+                        <span style="display: inline-block; width: 12px; height: 12px; background: #${color.toString(16).padStart(6, '0')}; margin-right: 5px;"></span>
+                        ${method}
+                    </label>
+                `;
+                legendList.appendChild(listItem);
+
+                const checkbox = listItem.querySelector('input');
+                checkbox.addEventListener('change', (event) => {
+                    const method = event.target.dataset.method;
+                    if (methodPoints[method]) {
+                        methodPoints[method].visible = event.target.checked;
+                    }
+                });
+            }
+        }
+
+        //-------------------------------------------------------------------------------
+        function toggleAllExoplanets(event) {
+            const allChecked = event.target.checked;
+            const methodCheckboxes = document.querySelectorAll('.method-checkbox');
+
+            for (const [method, pointCloud] of Object.entries(methodPoints)) {
+                if (allChecked) {
+                    pointCloud.material.color.set(0x58d68d); // Set all points to green
+                    pointCloud.visible = true;
+                } else {
+                    pointCloud.material.color.set(methodColors[method]); // Restore original color
+                    pointCloud.visible = document.querySelector(`.method-checkbox[data-method="${method}"]`).checked;
+                }
+            }
+
+            // Enable/disable method checkboxes
+            methodCheckboxes.forEach((checkbox) => {
+                checkbox.disabled = allChecked;
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        function addGalacticNorthMarker() {
+            // Create canvas and draw the "N"
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
+
+            // Draw the letter "N"
+            context.fillStyle = 'white';
+            context.font = 'bold 100px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('N', canvas.width / 2, canvas.height / 2);
+
+            // Create a texture from the canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+            const sprite = new THREE.Sprite(spriteMaterial);
+
+            sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
+            sprite.position.set(0, 30000, 0); // Position at Galactic North
+
+            scene.add(sprite);
+        }
+
+        //-------------------------------------------------------------------------------
+        function createCircularTexture() {
+            const size = 256; // Texture resolution
+            const canvas = document.createElement('canvas');
+            canvas.width = size;
+            canvas.height = size;
+
+            const ctx = canvas.getContext('2d');
+            ctx.beginPath();
+            ctx.arc(size / 2, size / 2, size / 2, 0, 2 * Math.PI);
+            ctx.fillStyle = '#ffffff'; // White circle
+            ctx.fill();
+
+            const texture = new THREE.CanvasTexture(canvas);
+            return texture;
+        }
+
+        //-------------------------------------------------------------------------------
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        //-------------------------------------------------------------------------------
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    </script>
 </body>
+
 </html>
