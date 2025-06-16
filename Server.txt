@@ -1,6 +1,12 @@
+* In the terminal:
 cd L:\Git\exoplanets-in-the-galaxy-3d
 python -m http.server 8000
 
+* Address:
 http://127.0.0.1:8000/
 
+* Refresh the page in the browser:
+Ctrl + Shift + R
+
+* Close it in the terminal:
 Ctrl+C

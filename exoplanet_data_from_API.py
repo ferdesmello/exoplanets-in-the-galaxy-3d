@@ -85,7 +85,7 @@ for item in range(len(sy_dist)) :
 
 # Writing in exit file-----------------------------------------------
 #--------------------------------------------------------------------
-fname = "Exoplanets_coordinates.txt"
+fname = "exoplanets_coordinates.txt"
 
 print("Writing on:", fname)
 
@@ -102,7 +102,7 @@ for item in range(len(sy_dist)) :
 fout.close()
 
 #--------------------------------------------------------------------
-fname = "Exoplanets_coordinates_methods.txt"
+fname = "exoplanets_coordinates_methods.txt"
 
 print("Writing on:", fname)
 

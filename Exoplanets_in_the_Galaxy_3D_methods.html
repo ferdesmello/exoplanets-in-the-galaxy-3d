@@ -1,26 +1,97 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>Galactic Exoplanet Distribution</title>
     <style>
-        body { margin: 0; }
-        canvas { display: block; }
-        #legend { position: absolute; top: 10px; right: 10px; background: rgba(0, 0, 0, 0.8); padding: 10px; color: white; font-family: Arial, sans-serif; }
-        #legend h3 { margin: 0 0 10px 0; }
-        #legend ul { list-style: none; padding: 0; margin: 0; }
-        #legend li { margin: 5px 0; }
-        #legend input[type="checkbox"] { margin-right: 5px; }
+        body {
+            margin: 0;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        #main-title {
+            position: absolute;
+            top: 10px;
+            /* Distance from the top */
+            left: 10px;
+            /* Distance from the left */
+            background: rgba(0, 0, 0, 0.8);
+            /* Semi-transparent black background */
+            padding: 15px;
+            /* Spacing inside the box */
+            color: white;
+            /* Text color */
+            font-family: Arial, sans-serif;
+            z-index: 10;
+            /* Ensures it's above the canvas and other elements */
+            border-radius: 8px;
+            /* Slightly rounded corners */
+        }
+
+        #main-title h1 {
+            margin: 0 0 10px 0;
+            /* Adjust heading margin */
+            font-size: 2em;
+            /* Adjust heading size */
+        }
+
+        #main-title p {
+            margin: 0;
+            /* Remove paragraph default margin */
+            font-size: 1.1em;
+            /* Adjust paragraph size */
+            line-height: 1.5;
+        }
+
+        #legend {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            color: white;
+            font-family: Arial, sans-serif;
+            border-radius: 8px;
+            /* Consistency with the title box */
+        }
+
+        #legend h3 {
+            margin: 0 0 10px 0;
+        }
+
+        #legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #legend li {
+            margin: 5px 0;
+        }
+
+        #legend input[type="checkbox"] {
+            margin-right: 5px;
+        }
     </style>
 </head>
+
 <body>
+    <div id="main-title">
+        <h1>Distribution of Exoplanets Discovered in Our Galaxy</h1>
+        <p>An interactive visualization of exoplanets by detection method.</p>
+    </div>
+
     <div id="legend">
         <h3>Detection methods</h3>
         <ul id="legend-list">
-            <!-- Add the "All" checkbox -->
             <li>
                 <label>
                     <input type="checkbox" id="all-checkbox" checked>
-                    <span style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
+                    <span
+                        style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
                     All
                 </label>
             </li>
@@ -47,9 +118,9 @@
             "Microlensing": 0x3498db, // Blue
             "Imaging": 0xf39c12, // Orange
             "Transit Timing Variations": 0x8e44ad, // Purple
-            "Eclipse Timing Variations": 0x922b21 , // Brown
-            "Orbital Brightness Modulation": 0xaf601a , // Dark orange
-            "Pulsar Timing": 0xfdfefe , // White
+            "Eclipse Timing Variations": 0x922b21, // Brown
+            "Orbital Brightness Modulation": 0xaf601a, // Dark orange
+            "Pulsar Timing": 0xfdfefe, // White
             "Astrometry": 0x1a5276, // Dark blue
             "Pulsation Timing Variations": 0x0e6655, // Dark green
             "Disk Kinematics": 0x616a6b, // Grey
@@ -65,7 +136,7 @@
         init();
         animate();
 
-//-------------------------------------------------------------------------------
+        //-------------------------------------------------------------------------------
         async function init() {
             // Scene setup
             scene = new THREE.Scene();
@@ -76,7 +147,7 @@
             document.getElementById('all-checkbox').addEventListener('change', toggleAllExoplanets);
 
             // Camera position
-            camera.position.set(0, 50000, 50000); 
+            camera.position.set(0, 50000, 50000);
 
             // Controls
             controls = new THREE.OrbitControls(camera, renderer.domElement);
@@ -87,13 +158,13 @@
 
             // Add galaxy plane
             createGalaxyPlane();
-            
+
             // Load and plot exoplanets
             await loadExoplanets();
 
             // Add Galactic North marker
             addGalacticNorthMarker();
-            
+
             // Add interactive legend
             createLegend();
 
@@ -116,7 +187,7 @@
                     side: THREE.DoubleSide,
                     color: new THREE.Color(1.0, 1.0, 1.0)
                 });
-                
+
                 galaxyPlane = new THREE.Mesh(geometry, material);
                 galaxyPlane.rotation.x = -Math.PI / 2;
                 scene.add(galaxyPlane);
@@ -221,14 +292,14 @@
             const context = canvas.getContext('2d');
             canvas.width = 512;
             canvas.height = 512;
-            
+
             // Draw the letter "N"
             context.fillStyle = 'white';
             context.font = 'bold 100px Arial';
             context.textAlign = 'center';
             context.textBaseline = 'middle';
             context.fillText('N', canvas.width / 2, canvas.height / 2);
-            
+
             // Create a texture from the canvas
             const texture = new THREE.CanvasTexture(canvas);
             const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
@@ -273,4 +344,5 @@
         });
     </script>
 </body>
+
 </html>

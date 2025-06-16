@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
-fname = "Exoplanets_coordinates.txt"
+fname = "exoplanets_coordinates.txt"
 
 print('Reading from:', fname)
 
