@@ -19,7 +19,7 @@ Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _e
 The images _MW_transparent.png_ and _MW_transparent_small.png_ may already be present. If not, you need to run **Exoplanets_in_the_Galaxy_3D.nb** ([Mathematica notebook](https://www.wolfram.com/notebooks/)) to create them and have a 3D visualization of the exoplanets.
 
 ### 5.
-Now, to have an interactive HTML page in your browser, you need to run **exoplanets_in_the_galaxy_3D_methods.html**.
+Now, to have an interactive HTML page in your browser, you need to run **index.html**.
 
 In your computer, open a terminal window and go to the project folder:
 ```console
@@ -33,7 +33,7 @@ On your browser, go to:
 ```console
 http://127.0.0.1:8000/
 ```
-And open **exoplanets_in_the_galaxy_3D_methods.html**.
+And open **index.html**.
 
 Close the server in the terminal with:
 ```console
