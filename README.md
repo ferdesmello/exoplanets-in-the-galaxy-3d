@@ -1,23 +1,52 @@
 # Exoplanets in the Galaxy
 
-## 1.
-**Run "[Exoplanet_json.py](/Exoplanet_json.py)"** to retrieve data from "[https://exoplanetarchive.ipac.caltech.edu](https://exoplanetarchive.ipac.caltech.edu)" and bild (or uptade) "Exoplanets_coordinates.txt" with distance and position data of every exoplanet discovered till now.
+## Overview
+Thousands of exoplanets have been discovered but their distribution is not uniform in our Galaxy. This is mostly because the methods used for detection can more easily detect exoplanets close to us or of certain characteristics, not because all exoplanets are distributed like that. Curious about what area of our galaxy we were able to map searching for exoplanets, I made this interactive visualization. You may see that, until now, we just mapped a very small region of our Galaxy.
 
-## 2.
-**Run "[Exoplanet_image.py](/Exoplanet_image.py)"** to retrieve data from "[Exoplanets_coordinates.txt](/Exoplanets_coordinates.txt)" and "[Artist's_impression_of_the_Milky_Way_gna2.jpg](/Artist's_impression_of_the_Milky_Way_gna2.jpg)" to build a 2D illustration of the distribution of exaplanets discovered in our Galaxy in the "[MWtransparent_dots](/MWtransparent_dots)".
+## What the code does
+
+### 1. Scraping the data
+Run **exoplanet_data_from_API.py** to retrieve data from [https://exoplanetarchive.ipac.caltech.edu](https://exoplanetarchive.ipac.caltech.edu) and build (or update) _Exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ with distance, position, and method of detection of every exoplanet discovered till now.
+
+### 2.
+Run **flat_galaxy_map.py** to retrieve data from _exoplanets_coordinates.txt_ and _Artist's_impression_of_the_Milky_Way_gna_small.jpg_ to make _MW_dots.jpg_, a 2D "map" of the distribution of exaplanets discovered in our Galaxy.
 ![Representation of the positions of the discovered exoplanets in our Galaxy.](/MW_dots.jpg)
 
-## 3.
-~~**Run "[Exoplanets_Place.html](/Exoplanets_Place.html)"** to see the image in the browser.~~
+### 3.
+Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ and transform the data to JSON format in _exoplanets_coordinates.json_ and _exoplanets_coordinates_methods.json_. This is used in the interactive visualization.
 
-## Other archives
-Other archives are in development stage or being tested. Ignore them.
+### 4.
+The images _MW_transparent.png_ and _MW_transparent_small.png_ may already be present. If not, you need to run **Exoplanets_in_the_Galaxy_3D.nb** ([Mathematica notebook](https://www.wolfram.com/notebooks/)) to create them and have a 3D visualization of the exoplanets.
 
-## For exoplanet archive informations in retrieving data, see:
+### 5.
+Now, to have an interactive HTML page in your browser, you need to run **exoplanets_in_the_galaxy_3D_methods.html**.
 
-### Some documentation: [https://exoplanetarchive.ipac.caltech.edu/applications/DocSet/index.html?doctree=/docs/docmenu.xml&startdoc=item_1_01](https://exoplanetarchive.ipac.caltech.edu/applications/DocSet/index.html?doctree=/docs/docmenu.xml&startdoc=item_1_01)
+In your computer, open a terminal window and go to the project folder:
+```console
+cd C:\Git\exoplanets-in-the-galaxy-3d
+```
+Create a server:
+```console
+python -m http.server 8000
+```
+On your browser, go to:
+```console
+http://127.0.0.1:8000/
+```
+And open **exoplanets_in_the_galaxy_3D_methods.html**.
 
-### How to use TAP and retrieve data: [https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html)
+Close the server in the terminal with:
+```console
+Ctrl+C
+```
 
-### And choosing your table and data on TAP: [https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
- 
+## The Illustration of Our Galaxy
+The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/).
+
+## For exoplanet archive information in retrieving data, see:
+### Some documentation
+[https://exoplanetarchive.ipac.caltech.edu/applications/DocSet/index.html?doctree=/docs/docmenu.xml&startdoc=item_1_01](https://exoplanetarchive.ipac.caltech.edu/applications/DocSet/index.html?doctree=/docs/docmenu.xml&startdoc=item_1_01)
+### How to use TAP and retrieve data
+[https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html](https://exoplanetarchive.ipac.caltech.edu/docs/TAP/usingTAP.html)
+### And how to choose your table and data on TAP
+[https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html](https://exoplanetarchive.ipac.caltech.edu/docs/API_PS_columns.html)
