@@ -9,17 +9,17 @@ Access the interactive visualization in your browser going [here](https://ferdes
 ### 1. Scraping the data
 Run **exoplanet_data_from_API.py** to retrieve data from [https://exoplanetarchive.ipac.caltech.edu](https://exoplanetarchive.ipac.caltech.edu) and build (or update) _Exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ with distance, position, and method of detection of every exoplanet discovered till now.
 
-### 2.
+### 2. Simple face-on flat map
 Run **flat_galaxy_map.py** to retrieve data from _exoplanets_coordinates.txt_ and _Artist's_impression_of_the_Milky_Way_gna_small.jpg_ to make _MW_dots.jpg_, a 2D "map" of the distribution of exaplanets discovered in our Galaxy.
 ![Representation of the positions of the discovered exoplanets in our Galaxy.](/MW_dots.jpg)
 
-### 3.
+### 3. From TXT to JSON
 Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ and transform the data to JSON format in _exoplanets_coordinates.json_ and _exoplanets_coordinates_methods.json_. This is used in the interactive visualization.
 
-### 4.
+### 4. Semi-transparent PNGs
 The images _MW_transparent.png_ and _MW_transparent_small.png_ may already be present. If not, you need to run **Exoplanets_in_the_Galaxy_3D.nb** ([Mathematica notebook](https://www.wolfram.com/notebooks/)) to create them and have a 3D visualization of the exoplanets.
 
-### 5.
+### 5. Local visualization
 Now, to access the interactive visualization _locally_ in your browser, you need to run **index.html**.
 
 In your computer, open a terminal window and go to the project folder:
@@ -34,14 +34,12 @@ In your browser, go to:
 ```console
 http://127.0.0.1:8000/
 ```
-And open **index.html**.
-
 Close the server in the terminal with:
 ```console
 Ctrl+C
 ```
 
-## The Illustration of Our Galaxy
+## The illustration of our Galaxy
 The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/).
 
 ## For exoplanet archive information in retrieving data, see:
