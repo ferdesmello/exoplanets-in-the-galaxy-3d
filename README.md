@@ -2,6 +2,7 @@
 
 ## Overview
 Thousands of exoplanets have been discovered but their distribution is not uniform in our Galaxy. This is mostly because the methods used for detection can more easily detect exoplanets close to us or of certain characteristics, not because all exoplanets are distributed like that. Curious about what area of our galaxy we were able to map searching for exoplanets, I made this interactive visualization. You may see that, until now, we just mapped a very small region of our Galaxy.
+Access the interactive visualization in your browser going [here](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d/).
 
 ## What the code does
 
@@ -19,7 +20,7 @@ Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _e
 The images _MW_transparent.png_ and _MW_transparent_small.png_ may already be present. If not, you need to run **Exoplanets_in_the_Galaxy_3D.nb** ([Mathematica notebook](https://www.wolfram.com/notebooks/)) to create them and have a 3D visualization of the exoplanets.
 
 ### 5.
-Now, to have an interactive HTML page in your browser, you need to run **index.html**.
+Now, to access the interactive visualization _locally_ in your browser, you need to run **index.html**.
 
 In your computer, open a terminal window and go to the project folder:
 ```console
@@ -29,7 +30,7 @@ Create a server:
 ```console
 python -m http.server 8000
 ```
-On your browser, go to:
+In your browser, go to:
 ```console
 http://127.0.0.1:8000/
 ```
