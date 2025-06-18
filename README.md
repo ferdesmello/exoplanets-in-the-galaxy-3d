@@ -6,7 +6,7 @@ Access the interactive visualization in your browser going [here](https://ferdes
 
 ![Update Exoplanet Data](https://github.com/your-username/your-repo-name/actions/workflows/your-workflow-file.yml/badge.svg)
 
-Date of the last automatic update: <!--LAST_UPDATE-->2025-06-01<!--END_LAST_UPDATE-->
+Date of the last automatic update: <!--LAST_UPDATE-->2025-06-18<!--END_LAST_UPDATE-->
 
 ## What the code does
 
