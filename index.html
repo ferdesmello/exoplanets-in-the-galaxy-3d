@@ -108,6 +108,19 @@
                 right: 10px;
             }
         }
+
+        #update-date {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 12px;
+            color: white;
+            font-family: Arial, sans-serif;
+            border-radius: 6px;
+            z-index: 20;
+        }
+
     </style>
 </head>
 
@@ -129,6 +142,10 @@
                 </label>
             </li>
         </ul>
+    </div>
+
+    <div id="update-date">
+        Last update: <span id="last-update">Loading...</span>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -376,6 +393,30 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
     </script>
+
+    <script>
+        fetch('last_update.txt')
+        .then(response => response.text())
+        .then(text => {
+            const match = text.match(/LAST_UPDATE=(.*)/);
+            if (match) {
+            const dateString = match[1];
+            const dateObj = new Date(dateString);
+            const formattedDate = dateObj.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            document.getElementById('last-update').textContent = formattedDate;
+            } else {
+            document.getElementById('last-update').textContent = 'Unknown';
+            }
+        })
+        .catch(() => {
+            document.getElementById('last-update').textContent = 'Unavailable';
+        });
+    </script>
+
 </body>
 
 </html>

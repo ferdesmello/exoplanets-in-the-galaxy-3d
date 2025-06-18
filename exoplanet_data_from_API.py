@@ -1,11 +1,13 @@
-import urllib.request, urllib.parse, urllib.error
+import urllib.request
 import json
 import ssl
 import math
 from collections import Counter
+from datetime import datetime
 
-# Defining the url---------------------------------------------------
 #--------------------------------------------------------------------
+# Define the url
+
 service_url = "https://exoplanetarchive.ipac.caltech.edu/"
 
 # Ignore SSL certificate errors
@@ -13,21 +15,17 @@ ctx = ssl.create_default_context()
 ctx.check_hostname = False
 ctx.verify_mode = ssl.CERT_NONE
 
-address = input("Enter url (Type Enter to go with the default url): ")
-if len(address) < 1: #break
-    address = service_url
-
+address = service_url
 querytap = "/TAP/sync?query="
-
-query = input("Enter query (Type Enter to go with the default query): ")
-if len(query) < 1: #break
-    query = "select+sy_dist,glat,glon,discoverymethod"
-    ending = "+from+pscomppars&format=json"
+query = "select+sy_dist,glat,glon,discoverymethod"
+ending = "+from+pscomppars&format=json"
 
 url = service_url + querytap + query + ending
 
-# Reading the data---------------------------------------------------
+
 #--------------------------------------------------------------------
+# Read the data
+
 print("Retrieving", url)
 
 uh = urllib.request.urlopen(url, context=ctx)
@@ -63,8 +61,9 @@ print(f"Number of exoplanets discovered: {exoplanets}")
 print(f"Number of exoplanets with distance determined: {count_exoplanets_distance}")
 print(Counter(meth))
 
-# Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
+# Operate on data
+
 print("Operating on data")
 
 X = list()
@@ -83,8 +82,9 @@ for item in range(len(sy_dist)) :
     Z.append(sy_dist[item]*pctoly*math.sin(math.radians(glat[item])))
     M.append(meth[item])
 
-# Writing in exit file-----------------------------------------------
 #--------------------------------------------------------------------
+# Write in the exit file
+
 fname = "exoplanets_coordinates.txt"
 
 print("Writing on:", fname)
@@ -119,4 +119,10 @@ for item in range(len(sy_dist)) :
 fout.close()
 
 #--------------------------------------------------------------------
-print("Done")
+# Write the last update time to "last_update.txt"
+
+with open('last_update.txt', 'w') as f:
+    f.write(f'LAST_UPDATE={datetime.now().isoformat()}')
+
+#--------------------------------------------------------------------
+print("All done.")
