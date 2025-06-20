@@ -39,7 +39,7 @@ image = Image.open("Artist's_impression_of_the_Milky_Way_gna_small.jpg")
 # Create a new image object for drawing
 print('Operating')
 
-image = image.rotate(-90, expand=True)
+#image = image.rotate(-90, expand=True)
 draw = ImageDraw.Draw(image)
 
 # Draw a green dot at each coordinate
@@ -56,4 +56,4 @@ print('Saving: MW_dots.jpg')
 
 image.save("MW_dots.jpg")
 
-print('Done')
+print('All done.')
