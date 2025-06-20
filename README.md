@@ -44,7 +44,7 @@ Ctrl+C
 ```
 
 ## The illustration of our Galaxy
-The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/).
+The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/). An annotated version can be found [here](https://www.eso.org/public/images/eso1339e/).
 
 ## For exoplanet archive information in retrieving data, see:
 ### Some documentation
