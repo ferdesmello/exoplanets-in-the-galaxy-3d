@@ -75,11 +75,20 @@ Mset = set(meth)
 pctoly = 3.26156 # Convertion of parsec to light years
 Dcg = 26000 # Distance of the Solar System to center of the Galaxy in light years
 
-# Going from spherical galactic coordinates to cartesian-------------
+# Going from spherical galactic coordinates to cartesian and rotating
+# and 90° counter clockwise in the plane for the images
 for item in range(len(sy_dist)) :
-    X.append(sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.cos(math.radians(glon[item]))-Dcg)
-    Y.append(sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.sin(math.radians(glon[item])))
-    Z.append(sy_dist[item]*pctoly*math.sin(math.radians(glat[item])))
+    # Original transformations
+    original_X = sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.cos(math.radians(glon[item]))-Dcg
+    original_Y = sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.sin(math.radians(glon[item]))
+    original_Z = sy_dist[item]*pctoly*math.sin(math.radians(glat[item]))
+
+    # Apply 90 degrees counter-clockwise rotation:
+    # new_X = -original_Y
+    # new_Y = original_X
+    X.append(-original_Y)  # New X is the negative of the original Y
+    Y.append(original_X)   # New Y is the original X
+    Z.append(original_Z)   # Z remains the same
     M.append(meth[item])
 
 #--------------------------------------------------------------------

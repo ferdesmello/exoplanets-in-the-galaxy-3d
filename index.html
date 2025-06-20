@@ -46,8 +46,8 @@
             line-height: 1.5;
         }
 
-        /* Legend box */
-        #legend {
+        /* Controls box (formerly legend) */
+        #controls {
             position: absolute;
             top: 10px;
             right: 10px;
@@ -71,30 +71,83 @@
             line-height: 1.5;
         }
 
-        #legend h3 {
+        /* Styles for the collapsable controls */
+        #controls h3 {
             margin: 0 0 10px 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
         }
 
-        #legend ul {
+        #controls-content {
+            max-height: 500px;
+            /* A value larger than the max expected height */
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            /* Smooth transition for collapsing */
+        }
+
+        #controls-content.collapsed {
+            max-height: 0;
+        }
+
+        .arrow {
+            transition: transform 0.3s ease-out;
+            font-size: 0.8em;
+            margin-right: 10px;
+            /* Space between arrow and text */
+        }
+
+        .arrow.up {
+            transform: rotate(180deg);
+            /* Rotate arrow when content is shown */
+        }
+
+        /* Styles for the new internal sections */
+        #methods-section,
+        #galaxy-annotations-section,
+        #galaxy-3d-section {
+            margin-top: 10px;
+            /* Add some spacing between sections */
+            padding-top: 10px;
+            /* Padding inside each section */
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            /* Separator line */
+        }
+
+        #methods-section:first-child { /* Keep this for the very first section */
+            margin-top: 0;
+            padding-top: 0;
+            border-top: none;
+        }
+
+        #controls h4 {
+            margin: 0 0 8px 0;
+            /* Smaller margin for subheadings */
+            font-size: 1.1em;
+            /* Adjust size for subheadings */
+        }
+
+        #controls ul {
             list-style: none;
             padding: 0;
             margin: 0;
         }
 
-        #legend li {
+        #controls li {
             margin: 5px 0;
         }
 
-        #legend input[type="checkbox"] {
+        #controls input[type="checkbox"] {
             margin-right: 5px;
         }
 
-        #legend {
+        #controls {
             max-width: 300px;
             word-wrap: break-word;
         }
 
-        #legend label {
+        #controls label {
             display: flex;
             align-items: center;
             gap: 5px;
@@ -102,11 +155,25 @@
         }
 
         @media (max-width: 600px) {
-            #legend {
+            #controls {
                 top: auto;
                 bottom: 10px;
                 right: 10px;
             }
+        }
+
+        #toggle-3d-container {
+            /* This will now be inside controls-content, so adjust positioning if needed relative to #controls */
+            position: relative; /* Changed from absolute */
+            top: auto; /* Changed from calc(10px + 100% + 8px) */
+            right: auto; /* Changed from 10px */
+            background: none; /* Remove background, as parent #controls has it */
+            padding: 0; /* Remove padding */
+            color: white;
+            font-family: Arial, sans-serif;
+            border-radius: 0; /* Remove border-radius */
+            z-index: auto; /* Remove z-index as it's part of the main controls */
+            margin-top: 10px; /* Add some margin from the top of the section */
         }
 
         #update-date {
@@ -121,6 +188,27 @@
             z-index: 20;
         }
 
+        #source-link {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 8px 12px;
+            color: white;
+            font-family: Arial, sans-serif;
+            border-radius: 6px;
+            z-index: 20;
+        }
+
+        #source-link a {
+            color: #58d68d;
+            /* Example color for links */
+            text-decoration: none;
+        }
+
+        #source-link a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 
@@ -130,22 +218,51 @@
         <p>An interactive visualization of exoplanets by detection method.</p>
     </div>
 
-    <div id="legend">
-        <h3>Detection methods</h3>
-        <ul id="legend-list">
-            <li>
-                <label>
-                    <input type="checkbox" id="all-checkbox" checked>
-                    <span
-                        style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
-                    All
-                </label>
-            </li>
-        </ul>
+    <div id="controls">
+        <h3 id="controls-title"><span class="arrow">&#9660;</span> Controls</h3>
+        <div id="controls-content">
+            <div id="methods-section">
+                <h4>Methods</h4>
+                <ul id="legend-list">
+                    <li>
+                        <label>
+                            <input type="checkbox" id="all-checkbox" checked>
+                            <span
+                                style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
+                            All
+                        </label>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="galaxy-annotations-section">
+                <h4>Galaxy Annotations</h4>
+                <div>
+                    <label>
+                        <input type="checkbox" id="toggle-galaxy-annotations">
+                        Show Annotations
+                    </label>
+                </div>
+            </div>
+
+            <div id="galaxy-3d-section">
+                <h4>3D Galaxy</h4>
+                <div id="toggle-3d-container">
+                    <label>
+                        <input type="checkbox" id="toggle-3d-galaxy">
+                        Extruded Galaxy (3D)
+                    </label>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="update-date">
         Last update: <span id="last-update">Loading...</span>
+    </div>
+
+    <div id="source-link">
+        <a href="https://github.com/ferdesmello/exoplanets-in-the-galaxy-3d" target="_blank">Source code and more</a>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -153,6 +270,7 @@
 
     <script>
         let scene, camera, renderer, controls;
+        //let galaxyPlane = null; // Ensure this is declared globally or accessible
 
         // Configuration
         const config = {
@@ -183,6 +301,9 @@
         // Store original materials for each method
         const originalMaterials = {};
 
+        // Make sure textureLoader is accessible globally or instantiated when needed.
+        const textureLoader = new THREE.TextureLoader();
+
         init();
         animate();
 
@@ -209,26 +330,38 @@
             // Add galaxy plane
             createGalaxyPlane();
 
+            const toggle3DCheckbox = document.getElementById('toggle-3d-galaxy');
+            toggle3DCheckbox.addEventListener('change', toggleGalaxyMode);
+
             // Load and plot exoplanets
             await loadExoplanets();
+
+            // Create galaxy height mesh
+            //createGalaxyHeightMesh();
 
             // Add Galactic North marker
             addGalacticNorthMarker();
 
-            // Add interactive legend
-            createLegend();
+            // Add interactive legend (now part of controls)
+            createControls(); // This function creates the checkboxes based on methods
 
             // Initialize "All" checkbox state
             const allCheckbox = document.getElementById('all-checkbox');
             allCheckbox.checked = true; // Start with "All" checked
             toggleAllExoplanets({ target: allCheckbox }); // Force update
+
+            // Add event listener for galaxy annotations toggle
+            const toggleAnnotationsCheckbox = document.getElementById('toggle-galaxy-annotations');
+            toggleAnnotationsCheckbox.addEventListener('change', toggleGalaxyAnnotations);
         }
 
         //-------------------------------------------------------------------------------
         function createGalaxyPlane() {
             // Create galaxy plane with PNG texture
-            const textureLoader = new THREE.TextureLoader();
-            textureLoader.load('MW_transparent_small.png', (texture) => {
+            const texturePath = document.getElementById('toggle-galaxy-annotations') && document.getElementById('toggle-galaxy-annotations').checked
+                                ? 'MW_transparent_annotated_small.png'
+                                : 'MW_transparent_small.png';
+            textureLoader.load(texturePath, (texture) => {
                 const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
                 const material = new THREE.MeshBasicMaterial({
                     map: texture,
@@ -238,10 +371,128 @@
                     color: new THREE.Color(1.0, 1.0, 1.0)
                 });
 
-                galaxyPlane = new THREE.Mesh(geometry, material);
-                galaxyPlane.rotation.x = -Math.PI / 2;
-                scene.add(galaxyPlane);
+                // If galaxyPlane already exists, update its material.
+                // Otherwise, create and add it to the scene.
+                if (galaxyPlane) {
+                    galaxyPlane.material.map.dispose(); // Dispose old texture
+                    galaxyPlane.material.map = texture;
+                    galaxyPlane.material.needsUpdate = true;
+                } else {
+                    galaxyPlane = new THREE.Mesh(geometry, material);
+                    galaxyPlane.rotation.x = -Math.PI / 2;
+                    scene.add(galaxyPlane);
+                }
             });
+        }
+
+        //-------------------------------------------------------------------------------
+        // Function to toggle galaxy annotations
+        function toggleGalaxyAnnotations(event) {
+            const showAnnotations = event.target.checked;
+
+            // Only switch the texture if we are currently in 2D mode
+            if (galaxyPlane) { // Check if the 2D plane is currently active
+                const newTexturePath = showAnnotations ? 'MW_transparent_annotated_small.png' : 'MW_transparent_small.png';
+
+                textureLoader.load(newTexturePath, (newTexture) => {
+                    if (galaxyPlane.material.map) {
+                        galaxyPlane.material.map.dispose(); // Important: release old texture from memory
+                    }
+                    galaxyPlane.material.map = newTexture;
+                    galaxyPlane.material.needsUpdate = true; // Tell Three.js the material has changed
+                });
+            }
+            // If in 3D mode, no action is needed here, as the 3D textures don't have annotations.
+        }
+
+        //-------------------------------------------------------------------------------
+        function createGalaxyHeightMesh() {
+            const textureLoader = new THREE.TextureLoader();
+
+            // Load BOTH images
+            const colorTexture = textureLoader.load('MW_transparent_small.png');
+            const heightTexture = textureLoader.load('MW_transparent_small_BW4b.png', (texture) => {
+                const widthSegments = 256;
+                const heightSegments = 256;
+
+                const geometry = new THREE.PlaneGeometry(
+                    config.galaxySize, config.galaxySize,
+                    widthSegments, heightSegments
+                );
+
+                // Extract pixel data from height map
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = texture.image;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+                const positions = geometry.attributes.position;
+
+                for (let i = 0; i < positions.count; i++) {
+                    const ix = i % (widthSegments + 1);
+                    const iy = Math.floor(i / (widthSegments + 1));
+
+                    const pixelX = Math.floor(ix / widthSegments * (img.width - 1));
+                    const pixelY = Math.floor(iy / heightSegments * (img.height - 1));
+                    const index = (pixelY * img.width + pixelX) * 4;
+
+                    const brightness = imgData[index] / 255; // Red channel
+                    const height = (brightness - 0.5) * 5000; // Centered extrusion up/down
+
+                    positions.setZ(i, height);
+                }
+                positions.needsUpdate = true;
+
+                const material = new THREE.MeshBasicMaterial({
+                    map: colorTexture, // COLOR image
+                    transparent: true,
+                    opacity: 1,
+                    side: THREE.DoubleSide,
+                    depthWrite: false, // Prevents the galaxy plane from affecting depth buffer
+                });
+
+                galaxyHeightMesh = new THREE.Mesh(geometry, material);
+                galaxyHeightMesh.rotation.x = -Math.PI / 2;
+                galaxyHeightMesh.renderOrder = 2;
+                scene.add(galaxyHeightMesh);
+
+                galaxyHeightMeshMirror = galaxyHeightMesh.clone();
+                galaxyHeightMeshMirror.scale.z = -1;
+                galaxyHeightMeshMirror.renderOrder = 1;
+                scene.add(galaxyHeightMeshMirror);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        let galaxyPlane = null;
+        let galaxyHeightMesh = null;
+        let galaxyHeightMeshMirror = null;
+
+        function toggleGalaxyMode(event) {
+            const is3D = event.target.checked;
+
+            if (is3D) {
+                // Remove 2D plane if exists
+                if (galaxyPlane) {
+                    scene.remove(galaxyPlane);
+                    galaxyPlane = null;
+                }
+                // Add 3D meshes
+                createGalaxyHeightMesh();
+            } else {
+                // Remove 3D meshes if exist
+                if (galaxyHeightMesh) {
+                    scene.remove(galaxyHeightMesh);
+                    scene.remove(galaxyHeightMeshMirror);
+                    galaxyHeightMesh = null;
+                    galaxyHeightMeshMirror = null;
+                }
+                // Add 2D plane back
+                createGalaxyPlane();
+            }
         }
 
         //-------------------------------------------------------------------------------
@@ -290,18 +541,18 @@
         }
 
         //-------------------------------------------------------------------------------
-        function createLegend() {
+        function createControls() {
             const legendList = document.getElementById('legend-list');
 
             for (const [method, color] of Object.entries(methodColors)) {
                 const listItem = document.createElement('li');
                 listItem.innerHTML = `
-                    <label>
-                        <input type="checkbox" class="method-checkbox" checked data-method="${method}">
-                        <span style="display: inline-block; width: 12px; height: 12px; background: #${color.toString(16).padStart(6, '0')}; margin-right: 5px;"></span>
-                        ${method}
-                    </label>
-                `;
+                        <label>
+                            <input type="checkbox" class="method-checkbox" checked data-method="${method}">
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #${color.toString(16).padStart(6, '0')}; margin-right: 5px;"></span>
+                            ${method}
+                        </label>
+                    `;
                 legendList.appendChild(listItem);
 
                 const checkbox = listItem.querySelector('input');
@@ -352,12 +603,20 @@
 
             // Create a texture from the canvas
             const texture = new THREE.CanvasTexture(canvas);
-            const spriteMaterial = new THREE.SpriteMaterial({ map: texture, transparent: true });
+
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                depthWrite: false, // Optional: prevents it from cutting background
+                blending: THREE.NormalBlending // Or AdditiveBlending if preferred
+            });
+
             const sprite = new THREE.Sprite(spriteMaterial);
 
             sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
             sprite.position.set(0, 30000, 0); // Position at Galactic North
 
+            sprite.renderOrder = 3; // Renders after the meshes
             scene.add(sprite);
         }
 
@@ -395,26 +654,43 @@
     </script>
 
     <script>
-        fetch('last_update.txt')
-        .then(response => response.text())
-        .then(text => {
-            const match = text.match(/LAST_UPDATE=(.*)/);
-            if (match) {
-            const dateString = match[1];
-            const dateObj = new Date(dateString);
-            const formattedDate = dateObj.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+        // Collapsible controls logic
+        document.addEventListener('DOMContentLoaded', () => {
+            const controlsTitle = document.getElementById('controls-title');
+            const controlsContent = document.getElementById('controls-content');
+            const arrow = controlsTitle.querySelector('.arrow');
+
+            // The menu should start uncollapsed, so no 'collapsed' class initially
+            controlsContent.classList.add('collapsed');
+            arrow.classList.remove('up'); // Arrow points up when uncollapsed
+
+            controlsTitle.addEventListener('click', () => {
+                controlsContent.classList.toggle('collapsed');
+                arrow.classList.toggle('up');
             });
-            document.getElementById('last-update').textContent = formattedDate;
-            } else {
-            document.getElementById('last-update').textContent = 'Unknown';
-            }
-        })
-        .catch(() => {
-            document.getElementById('last-update').textContent = 'Unavailable';
         });
+
+        // Last update logic (keep it separate if you prefer)
+        fetch('last_update.txt')
+            .then(response => response.text())
+            .then(text => {
+                const match = text.match(/LAST_UPDATE=(.*)/);
+                if (match) {
+                    const dateString = match[1];
+                    const dateObj = new Date(dateString);
+                    const formattedDate = dateObj.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                    });
+                    document.getElementById('last-update').textContent = formattedDate;
+                } else {
+                    document.getElementById('last-update').textContent = 'Unknown';
+                }
+            })
+            .catch(() => {
+                document.getElementById('last-update').textContent = 'Unavailable';
+            });
     </script>
 
 </body>

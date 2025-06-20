@@ -1,6 +1,8 @@
 import json
 
 #--------------------------------------------------------------------
+print('Starting...')
+
 # Read the text file and split it into lines
 with open("exoplanets_coordinates.txt", "r") as f:
     lines = f.readlines()
@@ -34,8 +36,11 @@ for line in lines:
         print(f"Skipping line due to incorrect number of fields: {line.strip()}") #report errors and skip.
 
 # Add the Solar System
-data2.append([float(-26000.0), float(0.0), float(0.0), "Sun"])
+data2.append([float(0.0), float(-26000.0), float(0.0), "Sun"])
 
 # Write the data to a JSON file
 with open("exoplanets_coordinates_methods.json", "w") as f:
     json.dump(data2, f, indent=4) #using indent=4 for better readability
+
+#--------------------------------------------------------------------
+print('All done.')
