@@ -94,7 +94,7 @@ for item in range(len(sy_dist)) :
 #--------------------------------------------------------------------
 # Write in the exit file
 
-fname = "exoplanets_coordinates.txt"
+fname = "./Data/exoplanets_coordinates.txt"
 
 print("Writing on:", fname)
 
@@ -111,7 +111,7 @@ for item in range(len(sy_dist)) :
 fout.close()
 
 #--------------------------------------------------------------------
-fname = "exoplanets_coordinates_methods.txt"
+fname = "./Data/exoplanets_coordinates_methods.txt"
 
 print("Writing on:", fname)
 
@@ -128,9 +128,12 @@ for item in range(len(sy_dist)) :
 fout.close()
 
 #--------------------------------------------------------------------
-# Write the last update time to "last_update.txt"
+fdate = "./Data/last_update.txt"
 
-with open('last_update.txt', 'w') as f:
+# Write the last update time to "last_update.txt"
+print("Writing on:", fdate)
+
+with open(fdate, 'w') as f:
     f.write(f'LAST_UPDATE={datetime.now().isoformat()}')
 
 #--------------------------------------------------------------------

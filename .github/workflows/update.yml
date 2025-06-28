@@ -32,7 +32,7 @@ jobs:
 
     - name: Update last update date
       run: |
-        echo "LAST_UPDATE=$(date -u +'%Y-%m-%d')" > last_update.txt
+        echo "LAST_UPDATE=$(date -u +'%Y-%m-%d')" > ./Data/last_update.txt
 
     - name: Update README with last update date
       run: |

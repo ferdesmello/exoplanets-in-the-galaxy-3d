@@ -2,7 +2,7 @@ from PIL import Image, ImageDraw
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
-fname = "exoplanets_coordinates.txt"
+fname = "./Data/exoplanets_coordinates.txt"
 
 print('Reading from:', fname)
 
@@ -32,7 +32,7 @@ for i in range(len(Xly)) :
     Zpx.append(1000 * (Zly[i]/68000) + 1000)
 
 # Load the image
-image = Image.open("Artist's_impression_of_the_Milky_Way_gna_small.jpg")
+image = Image.open("./Images/Artist's_impression_of_the_Milky_Way_gna_small.jpg")
 
 # Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
@@ -52,8 +52,8 @@ for dot in range(len(Xpx)):
 
 # Writing in exit file-----------------------------------------------
 #--------------------------------------------------------------------
-print('Saving: MW_dots.jpg')
+print('Saving: ./Images/MW_dots.jpg')
 
-image.save("MW_dots.jpg")
+image.save("./Images/MW_dots.jpg")
 
 print('All done.')

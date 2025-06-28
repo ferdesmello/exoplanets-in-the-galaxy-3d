@@ -46,7 +46,7 @@
             line-height: 1.5;
         }
 
-        /* Controls box (formerly legend) */
+        /* Controls box */
         #controls {
             position: absolute;
             top: 10px;
@@ -76,6 +76,7 @@
             margin: 0 0 10px 0;
             cursor: pointer;
             display: flex;
+            font-size: 1.5em;
             align-items: center;
         }
 
@@ -93,7 +94,7 @@
 
         .arrow {
             transition: transform 0.3s ease-out;
-            font-size: 0.8em;
+            font-size: 1.0em;
             margin-right: 10px;
             /* Space between arrow and text */
         }
@@ -152,6 +153,11 @@
             align-items: center;
             gap: 5px;
             flex-wrap: wrap;
+        }
+
+        /* Padding for the legend of methods */
+        #legend-list li:not(.all-method) {
+            margin-left: 12px; /* indent */
         }
 
         @media (max-width: 600px) {
@@ -224,11 +230,10 @@
             <div id="methods-section">
                 <h4>Methods</h4>
                 <ul id="legend-list">
-                    <li>
+                    <li class="all-method">
                         <label>
                             <input type="checkbox" id="all-checkbox" checked>
-                            <span
-                                style="display: inline-block; width: 12px; height: 12px; background: #ffffff; margin-right: 5px;"></span>
+                            <span style="display: inline-block; width: 12px; height: 12px; background: #58d68d; margin-right: 5px;"></span>
                             All
                         </label>
                     </li>
@@ -250,7 +255,7 @@
                 <div id="toggle-3d-container">
                     <label>
                         <input type="checkbox" id="toggle-3d-galaxy">
-                        Extruded Galaxy (3D)
+                        Extrude Galaxy
                     </label>
                 </div>
             </div>
@@ -281,18 +286,18 @@
 
         // Define colors for each method
         const methodColors = {
-            "Transit": 0xe74c3c, // Red
-            "Radial Velocity": 0x27ae60, // Green
-            "Microlensing": 0x3498db, // Blue
-            "Imaging": 0xf39c12, // Orange
-            "Transit Timing Variations": 0x8e44ad, // Purple
-            "Eclipse Timing Variations": 0x922b21, // Brown
-            "Orbital Brightness Modulation": 0xaf601a, // Dark orange
-            "Pulsar Timing": 0xfdfefe, // White
-            "Astrometry": 0x1a5276, // Dark blue
-            "Pulsation Timing Variations": 0x0e6655, // Dark green
-            "Disk Kinematics": 0x616a6b, // Grey
-            "Sun": 0xf1c40f // Yellow
+            "Transit": 0xe74c3c, // Red #e74c3c
+            "Radial Velocity": 0x27ae60, // Green #27ae60
+            "Microlensing": 0x3498db, // Blue #3498db
+            "Imaging": 0xf39c12, // Orange #f39c12
+            "Transit Timing Variations": 0x8e44ad, // Purple #8e44ad
+            "Eclipse Timing Variations": 0x922b21, // Brown #922b21
+            "Orbital Brightness Modulation": 0xaf601a, // Dark orange #af601a
+            "Pulsar Timing": 0xfdfefe, // White #efdfefe
+            "Astrometry": 0x1a5276, // Dark blue #1a5276
+            "Pulsation Timing Variations": 0x0e6655, // Dark green #0e6655
+            "Disk Kinematics": 0x616a6b, // Grey #616a6b
+            "Sun": 0xf1c40f // Yellow #f1c40f
         };
 
         // Store points objects for each method
@@ -342,7 +347,7 @@
             // Add Galactic North marker
             addGalacticNorthMarker();
 
-            // Add interactive legend (now part of controls)
+            // Add interactive controls
             createControls(); // This function creates the checkboxes based on methods
 
             // Initialize "All" checkbox state
@@ -357,33 +362,47 @@
 
         //-------------------------------------------------------------------------------
         function createGalaxyPlane() {
-            // Create galaxy plane with PNG texture
-            const texturePath = document.getElementById('toggle-galaxy-annotations') && document.getElementById('toggle-galaxy-annotations').checked
-                                ? 'MW_transparent_annotated_small.png'
-                                : 'MW_transparent_small.png';
-            textureLoader.load(texturePath, (texture) => {
+            const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.checked;
+
+            const previewPath = isAnnotated
+                ? './Images/MW_transparent_annotated_preview.png'
+                : './Images/MW_transparent_preview.png';
+
+            const highResPath = isAnnotated
+                ? './Images/MW_transparent_annotated_small.png'
+                : './Images/MW_transparent_small.png';
+
+            const textureLoader = new THREE.TextureLoader();
+
+            // Load low-res preview first
+            textureLoader.load(previewPath, (previewTexture) => {
                 const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
                 const material = new THREE.MeshBasicMaterial({
-                    map: texture,
+                    map: previewTexture,
                     transparent: true,
                     opacity: 1.0,
-                    side: THREE.DoubleSide,
-                    color: new THREE.Color(1.0, 1.0, 1.0)
+                    side: THREE.DoubleSide
                 });
 
-                // If galaxyPlane already exists, update its material.
-                // Otherwise, create and add it to the scene.
                 if (galaxyPlane) {
-                    galaxyPlane.material.map.dispose(); // Dispose old texture
-                    galaxyPlane.material.map = texture;
+                    galaxyPlane.material.map.dispose();
+                    galaxyPlane.material.map = previewTexture;
                     galaxyPlane.material.needsUpdate = true;
                 } else {
                     galaxyPlane = new THREE.Mesh(geometry, material);
                     galaxyPlane.rotation.x = -Math.PI / 2;
                     scene.add(galaxyPlane);
                 }
+
+                // Now load the full-resolution texture
+                textureLoader.load(highResPath, (hiResTexture) => {
+                    galaxyPlane.material.map.dispose(); // Dispose old one
+                    galaxyPlane.material.map = hiResTexture;
+                    galaxyPlane.material.needsUpdate = true;
+                });
             });
         }
+
 
         //-------------------------------------------------------------------------------
         // Function to toggle galaxy annotations
@@ -392,7 +411,7 @@
 
             // Only switch the texture if we are currently in 2D mode
             if (galaxyPlane) { // Check if the 2D plane is currently active
-                const newTexturePath = showAnnotations ? 'MW_transparent_annotated_small.png' : 'MW_transparent_small.png';
+                const newTexturePath = showAnnotations ? './Images/MW_transparent_annotated_small.png' : './Images/MW_transparent_small.png';
 
                 textureLoader.load(newTexturePath, (newTexture) => {
                     if (galaxyPlane.material.map) {
@@ -410,8 +429,8 @@
             const textureLoader = new THREE.TextureLoader();
 
             // Load BOTH images
-            const colorTexture = textureLoader.load('MW_transparent_small.png');
-            const heightTexture = textureLoader.load('MW_transparent_small_BW4b.png', (texture) => {
+            const colorTexture = textureLoader.load('./Images/MW_transparent_small.png');
+            const heightTexture = textureLoader.load('./Images/MW_transparent_small_BW4b.png', (texture) => {
                 const widthSegments = 256;
                 const heightSegments = 256;
 
@@ -440,7 +459,7 @@
                     const index = (pixelY * img.width + pixelX) * 4;
 
                     const brightness = imgData[index] / 255; // Red channel
-                    const height = (brightness - 0.5) * 5000; // Centered extrusion up/down
+                    const height = (brightness - 0.5) * 8000; // Centered extrusion up/down
 
                     positions.setZ(i, height);
                 }
@@ -459,10 +478,10 @@
                 galaxyHeightMesh.renderOrder = 2;
                 scene.add(galaxyHeightMesh);
 
-                galaxyHeightMeshMirror = galaxyHeightMesh.clone();
-                galaxyHeightMeshMirror.scale.z = -1;
-                galaxyHeightMeshMirror.renderOrder = 1;
-                scene.add(galaxyHeightMeshMirror);
+                //galaxyHeightMeshMirror = galaxyHeightMesh.clone();
+                //galaxyHeightMeshMirror.scale.z = -1;
+                //galaxyHeightMeshMirror.renderOrder = 1;
+                //scene.add(galaxyHeightMeshMirror);
             });
         }
 
@@ -497,7 +516,7 @@
 
         //-------------------------------------------------------------------------------
         async function loadExoplanets() {
-            const response = await fetch('Exoplanets_coordinates_methods.json');
+            const response = await fetch('./Data/exoplanets_coordinates_methods.json');
             const data = await response.json();
 
             // Group data by method
@@ -671,7 +690,7 @@
         });
 
         // Last update logic (keep it separate if you prefer)
-        fetch('last_update.txt')
+        fetch('./Data/last_update.txt')
             .then(response => response.text())
             .then(text => {
                 const match = text.match(/LAST_UPDATE=(.*)/);

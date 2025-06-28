@@ -4,19 +4,19 @@ import json
 print('Starting...')
 
 # Read the text file and split it into lines
-with open("exoplanets_coordinates.txt", "r") as f:
+with open("./Data/exoplanets_coordinates.txt", "r") as f:
     lines = f.readlines()
 
 # Convert each line to a list of coordinates
 data = [list(map(float, line.strip().split())) for line in lines]
 
 # Write the data to a JSON file
-with open("exoplanets_coordinates.json", "w") as f:
+with open("./Data/exoplanets_coordinates.json", "w") as f:
     json.dump(data, f)
 
 #--------------------------------------------------------------------
 # Read the text file and split it into lines
-with open("exoplanets_coordinates_methods.txt", "r") as f:
+with open("./Data/exoplanets_coordinates_methods.txt", "r") as f:
     lines = f.readlines()
 
 # Convert each line to a list of coordinates with correct data types
@@ -39,7 +39,7 @@ for line in lines:
 data2.append([float(0.0), float(-26000.0), float(0.0), "Sun"])
 
 # Write the data to a JSON file
-with open("exoplanets_coordinates_methods.json", "w") as f:
+with open("./Data/exoplanets_coordinates_methods.json", "w") as f:
     json.dump(data2, f, indent=4) #using indent=4 for better readability
 
 #--------------------------------------------------------------------
