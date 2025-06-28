@@ -15,7 +15,7 @@ Run **exoplanet_data_from_API.py** to retrieve data from [https://exoplanetarchi
 
 ### 2. Simple face-on flat map
 Run **flat_galaxy_map.py** to retrieve data from _exoplanets_coordinates.txt_ and _Artist's_impression_of_the_Milky_Way_gna_small.jpg_ to make _MW_dots.jpg_, a 2D "map" of the distribution of exaplanets discovered in our Galaxy.
-![Representation of the positions of the discovered exoplanets in our Galaxy.](/MW_dots.jpg)
+![Representation of the positions of the exoplanets discovered in our Galaxy.](/MW_dots.jpg)
 
 ### 3. From TXT to JSON
 Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ and transform the data to JSON format in _exoplanets_coordinates.json_ and _exoplanets_coordinates_methods.json_. This is used in the interactive visualization.
