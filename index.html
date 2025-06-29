@@ -122,6 +122,11 @@
             border-top: none;
         }
 
+        #controls {
+            max-height: 90vh; /* Don’t exceed screen height */
+            overflow-y: auto; /* Enable vertical scroll if content exceeds height */
+        }
+
         #controls h4 {
             margin: 0 0 8px 0;
             /* Smaller margin for subheadings */
@@ -160,13 +165,13 @@
             margin-left: 12px; /* indent */
         }
 
-        @media (max-width: 600px) {
+        /*@media (max-width: 600px) {
             #controls {
                 top: auto;
                 bottom: 10px;
                 right: 10px;
             }
-        }
+        }*/
 
         #toggle-3d-container {
             /* This will now be inside controls-content, so adjust positioning if needed relative to #controls */
@@ -180,6 +185,21 @@
             border-radius: 0; /* Remove border-radius */
             z-index: auto; /* Remove z-index as it's part of the main controls */
             margin-top: 10px; /* Add some margin from the top of the section */
+        }
+
+        #loading-textures {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 10px 20px;
+            font-family: Arial, sans-serif;
+            font-size: 1.5em;
+            border-radius: 6px;
+            z-index: 30;
+            display: none; /* hidden by default */
         }
 
         #update-date {
@@ -262,6 +282,8 @@
         </div>
     </div>
 
+    <div id="loading-textures">Loading textures...</div>
+
     <div id="update-date">
         Last update: <span id="last-update">Loading...</span>
     </div>
@@ -274,6 +296,19 @@
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
 
     <script>
+
+        const preloadImages = [
+            './Images/MW_transparent_small.png',
+            './Images/MW_transparent_annotated_small.png',
+            './Images/MW_transparent_preview.png',
+            './Images/MW_transparent_annotated_preview.png'
+        ];
+
+        preloadImages.forEach(src => {
+            const img = new Image();
+            img.src = src;
+        });
+
         let scene, camera, renderer, controls;
         //let galaxyPlane = null; // Ensure this is declared globally or accessible
 
@@ -362,8 +397,14 @@
 
         //-------------------------------------------------------------------------------
         function createGalaxyPlane() {
-            const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.checked;
+            const loadingMsg = document.getElementById('loading-textures');
+            if (loadingMsg) loadingMsg.style.display = 'block'; // Show loading
 
+            const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.checked;
+            //const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.addEventListener('change', () => {
+            //    createGalaxyPlane(); // Triggers reloading of selected texture
+            //});
+            
             const previewPath = isAnnotated
                 ? './Images/MW_transparent_annotated_preview.png'
                 : './Images/MW_transparent_preview.png';
@@ -399,6 +440,8 @@
                     galaxyPlane.material.map.dispose(); // Dispose old one
                     galaxyPlane.material.map = hiResTexture;
                     galaxyPlane.material.needsUpdate = true;
+
+                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading
                 });
             });
         }
