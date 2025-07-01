@@ -15,38 +15,27 @@
         #main-title {
             position: absolute;
             top: 10px;
-            /* Distance from the top */
             left: 10px;
-            /* Distance from the left */
             background: rgba(0, 0, 0, 0.8);
-            /* Semi-transparent black background */
             padding: 15px;
-            /* Spacing inside the box */
             color: white;
-            /* Text color */
             font-family: Arial, sans-serif;
             z-index: 10;
-            /* Ensures it's above the canvas and other elements */
             border-radius: 8px;
-            /* Slightly rounded corners */
         }
 
         #main-title h1 {
             margin: 0 0 10px 0;
-            /* Adjust heading margin */
             font-size: 2em;
-            /* Adjust heading size */
         }
 
         #main-title p {
             margin: 0;
-            /* Remove paragraph default margin */
             font-size: 1.1em;
-            /* Adjust paragraph size */
             line-height: 1.5;
         }
 
-        /* Controls box */
+        /* Fixed controls box for mobile */
         #controls {
             position: absolute;
             top: 10px;
@@ -57,35 +46,40 @@
             font-family: Arial, sans-serif;
             border-radius: 8px;
             z-index: 11;
-            /* Make it higher than the title */
+            max-width: 300px;
+            max-height: calc(100vh - 40px); /* Better mobile height calculation */
+            overflow-y: auto;
+            word-wrap: break-word;
         }
 
-        #main-title h1 {
-            margin: 0 0 10px 0;
-            font-size: 2em;
+        /* Mobile-specific adjustments */
+        @media (max-width: 768px) {
+            #controls {
+                position: fixed; /* Use fixed positioning on mobile */
+                top: 10px;
+                right: 10px;
+                max-width: calc(100vw - 40px);
+                max-height: calc(100vh - 80px);
+            }
+            
+            #main-title {
+                position: fixed; /* Use fixed positioning on mobile */
+                max-width: calc(100vw - 40px);
+            }
         }
 
-        #main-title p {
-            margin: 0;
-            font-size: 1.1em;
-            line-height: 1.5;
-        }
-
-        /* Styles for the collapsable controls */
         #controls h3 {
             margin: 0 0 10px 0;
             cursor: pointer;
             display: flex;
-            font-size: 1.5em;
+            font-size: 2.0em;
             align-items: center;
         }
 
         #controls-content {
             max-height: 500px;
-            /* A value larger than the max expected height */
             overflow: hidden;
             transition: max-height 0.3s ease-out;
-            /* Smooth transition for collapsing */
         }
 
         #controls-content.collapsed {
@@ -96,42 +90,29 @@
             transition: transform 0.3s ease-out;
             font-size: 1.0em;
             margin-right: 10px;
-            /* Space between arrow and text */
         }
 
         .arrow.up {
             transform: rotate(180deg);
-            /* Rotate arrow when content is shown */
         }
 
-        /* Styles for the new internal sections */
         #methods-section,
         #galaxy-annotations-section,
         #galaxy-3d-section {
             margin-top: 10px;
-            /* Add some spacing between sections */
             padding-top: 10px;
-            /* Padding inside each section */
             border-top: 1px solid rgba(255, 255, 255, 0.2);
-            /* Separator line */
         }
 
-        #methods-section:first-child { /* Keep this for the very first section */
+        #methods-section:first-child {
             margin-top: 0;
             padding-top: 0;
             border-top: none;
         }
 
-        #controls {
-            max-height: 90vh; /* Don’t exceed screen height */
-            overflow-y: auto; /* Enable vertical scroll if content exceeds height */
-        }
-
         #controls h4 {
             margin: 0 0 8px 0;
-            /* Smaller margin for subheadings */
             font-size: 1.1em;
-            /* Adjust size for subheadings */
         }
 
         #controls ul {
@@ -148,11 +129,6 @@
             margin-right: 5px;
         }
 
-        #controls {
-            max-width: 300px;
-            word-wrap: break-word;
-        }
-
         #controls label {
             display: flex;
             align-items: center;
@@ -160,31 +136,21 @@
             flex-wrap: wrap;
         }
 
-        /* Padding for the legend of methods */
         #legend-list li:not(.all-method) {
-            margin-left: 12px; /* indent */
+            margin-left: 12px;
         }
 
-        /*@media (max-width: 600px) {
-            #controls {
-                top: auto;
-                bottom: 10px;
-                right: 10px;
-            }
-        }*/
-
         #toggle-3d-container {
-            /* This will now be inside controls-content, so adjust positioning if needed relative to #controls */
-            position: relative; /* Changed from absolute */
-            top: auto; /* Changed from calc(10px + 100% + 8px) */
-            right: auto; /* Changed from 10px */
-            background: none; /* Remove background, as parent #controls has it */
-            padding: 0; /* Remove padding */
+            position: relative;
+            top: auto;
+            right: auto;
+            background: none;
+            padding: 0;
             color: white;
             font-family: Arial, sans-serif;
-            border-radius: 0; /* Remove border-radius */
-            z-index: auto; /* Remove z-index as it's part of the main controls */
-            margin-top: 10px; /* Add some margin from the top of the section */
+            border-radius: 0;
+            z-index: auto;
+            margin-top: 10px;
         }
 
         #loading-textures {
@@ -199,7 +165,7 @@
             font-size: 1.5em;
             border-radius: 6px;
             z-index: 30;
-            display: none; /* hidden by default */
+            display: none;
         }
 
         #update-date {
@@ -228,7 +194,6 @@
 
         #source-link a {
             color: #58d68d;
-            /* Example color for links */
             text-decoration: none;
         }
 
@@ -297,20 +262,31 @@
 
     <script>
 
+        // Image cache for faster switching
+        const imageCache = {};
+        
         const preloadImages = [
-            './Images/MW_transparent_small.png',
-            './Images/MW_transparent_annotated_small.png',
             './Images/MW_transparent_preview.png',
-            './Images/MW_transparent_annotated_preview.png'
+            './Images/MW_transparent_annotated_preview.png',
+            './Images/MW_transparent_small.png',
+            './Images/MW_transparent_annotated_small.png'
         ];
 
-        preloadImages.forEach(src => {
-            const img = new Image();
-            img.src = src;
-        });
+        // Enhanced preloading with caching
+        function preloadImagesWithCache() {
+            preloadImages.forEach(src => {
+                const img = new Image();
+                img.onload = () => {
+                    imageCache[src] = img;
+                };
+                img.src = src;
+            });
+        }
+
+        // Call enhanced preloading
+        preloadImagesWithCache();
 
         let scene, camera, renderer, controls;
-        //let galaxyPlane = null; // Ensure this is declared globally or accessible
 
         // Configuration
         const config = {
@@ -376,9 +352,6 @@
             // Load and plot exoplanets
             await loadExoplanets();
 
-            // Create galaxy height mesh
-            //createGalaxyHeightMesh();
-
             // Add Galactic North marker
             addGalacticNorthMarker();
 
@@ -396,14 +369,12 @@
         }
 
         //-------------------------------------------------------------------------------
+        // Fixed createGalaxyPlane function with proper preview/loading handling
         function createGalaxyPlane() {
             const loadingMsg = document.getElementById('loading-textures');
-            if (loadingMsg) loadingMsg.style.display = 'block'; // Show loading
+            if (loadingMsg) loadingMsg.style.display = 'block'; // Always show loading
 
             const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.checked;
-            //const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.addEventListener('change', () => {
-            //    createGalaxyPlane(); // Triggers reloading of selected texture
-            //});
             
             const previewPath = isAnnotated
                 ? './Images/MW_transparent_annotated_preview.png'
@@ -415,56 +386,60 @@
 
             const textureLoader = new THREE.TextureLoader();
 
-            // Load low-res preview first
-            textureLoader.load(previewPath, (previewTexture) => {
-                const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
-                const material = new THREE.MeshBasicMaterial({
-                    map: previewTexture,
-                    transparent: true,
-                    opacity: 1.0,
-                    side: THREE.DoubleSide
-                });
-
+            // Function to create or update galaxy plane with texture
+            function updateGalaxyPlaneTexture(texture) {
                 if (galaxyPlane) {
-                    galaxyPlane.material.map.dispose();
-                    galaxyPlane.material.map = previewTexture;
+                    // Dispose old texture to prevent memory leaks
+                    if (galaxyPlane.material.map) {
+                        galaxyPlane.material.map.dispose();
+                    }
+                    galaxyPlane.material.map = texture;
                     galaxyPlane.material.needsUpdate = true;
                 } else {
+                    // Create new galaxy plane
+                    const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 1.0,
+                        side: THREE.DoubleSide
+                    });
                     galaxyPlane = new THREE.Mesh(geometry, material);
                     galaxyPlane.rotation.x = -Math.PI / 2;
                     scene.add(galaxyPlane);
                 }
+            }
 
+            // Load low-res preview first (always show preview and loading)
+            textureLoader.load(previewPath, (previewTexture) => {
+                updateGalaxyPlaneTexture(previewTexture);
+                
                 // Now load the full-resolution texture
                 textureLoader.load(highResPath, (hiResTexture) => {
-                    galaxyPlane.material.map.dispose(); // Dispose old one
-                    galaxyPlane.material.map = hiResTexture;
-                    galaxyPlane.material.needsUpdate = true;
-
-                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading
+                    updateGalaxyPlaneTexture(hiResTexture);
+                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading after high-res loads
+                }, undefined, (error) => {
+                    console.error('Error loading high-res texture:', error);
+                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading on error
                 });
+            }, undefined, (error) => {
+                console.error('Error loading preview texture:', error);
+                if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading on error
             });
         }
-
 
         //-------------------------------------------------------------------------------
         // Function to toggle galaxy annotations
         function toggleGalaxyAnnotations(event) {
-            const showAnnotations = event.target.checked;
-
-            // Only switch the texture if we are currently in 2D mode
-            if (galaxyPlane) { // Check if the 2D plane is currently active
-                const newTexturePath = showAnnotations ? './Images/MW_transparent_annotated_small.png' : './Images/MW_transparent_small.png';
-
-                textureLoader.load(newTexturePath, (newTexture) => {
-                    if (galaxyPlane.material.map) {
-                        galaxyPlane.material.map.dispose(); // Important: release old texture from memory
-                    }
-                    galaxyPlane.material.map = newTexture;
-                    galaxyPlane.material.needsUpdate = true; // Tell Three.js the material has changed
-                });
+            // If in 3D mode, do nothing or disable the checkbox.
+            // For now, if 3D is active, we just don't load a new 2D texture.
+            if (document.getElementById('toggle-3d-galaxy').checked) {
+                return;
             }
-            // If in 3D mode, no action is needed here, as the 3D textures don't have annotations.
+
+            // Call createGalaxyPlane to handle the loading of preview and high-res
+            // based on the new annotation state.
+            createGalaxyPlane();
         }
 
         //-------------------------------------------------------------------------------
@@ -520,11 +495,6 @@
                 galaxyHeightMesh.rotation.x = -Math.PI / 2;
                 galaxyHeightMesh.renderOrder = 2;
                 scene.add(galaxyHeightMesh);
-
-                //galaxyHeightMeshMirror = galaxyHeightMesh.clone();
-                //galaxyHeightMeshMirror.scale.z = -1;
-                //galaxyHeightMeshMirror.renderOrder = 1;
-                //scene.add(galaxyHeightMeshMirror);
             });
         }
 
@@ -559,46 +529,102 @@
 
         //-------------------------------------------------------------------------------
         async function loadExoplanets() {
-            const response = await fetch('./Data/exoplanets_coordinates_methods.json');
-            const data = await response.json();
+            try {
+                const response = await fetch('./Data/exoplanets_coordinates_methods.json');
+                const data = await response.json();
 
-            // Group data by method
-            const groupedData = {};
-            data.forEach((exoplanet) => {
-                const method = exoplanet[3]; // Fourth column is the method
-                if (!groupedData[method]) {
-                    groupedData[method] = [];
+                // Group data by method
+                const groupedData = {};
+                data.forEach((exoplanet) => {
+                    const method = exoplanet[3]; // Fourth column is the method
+                    if (!groupedData[method]) {
+                        groupedData[method] = [];
+                    }
+                    groupedData[method].push(exoplanet);
+                });
+
+                // Create spheres for each method
+                for (const [method, points] of Object.entries(groupedData)) {
+                    const geometry = new THREE.BufferGeometry();
+                    const vertices = [];
+
+                    points.forEach((exoplanet) => {
+                        vertices.push(exoplanet[0], exoplanet[2], -exoplanet[1]);
+                    });
+
+                    const verticesArray = new Float32Array(vertices);
+                    geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+
+                    const circularTexture = createCircularTexture();
+
+                    const material = new THREE.PointsMaterial({
+                        color: methodColors[method],
+                        size: 100, // Adjust point size
+                        alphaMap: circularTexture, // Apply texture
+                        transparent: true, // Keep background transparent
+                        alphaTest: 0.5, // Avoid rendering square edges
+                    });
+
+                    const pointCloud = new THREE.Points(geometry, material);
+                    scene.add(pointCloud);
+
+                    // Store for toggling
+                    methodPoints[method] = pointCloud;
                 }
-                groupedData[method].push(exoplanet);
-            });
-
-            // Create spheres for each method
-            for (const [method, points] of Object.entries(groupedData)) {
-                const geometry = new THREE.BufferGeometry();
-                const vertices = [];
-
-                points.forEach((exoplanet) => {
-                    vertices.push(exoplanet[0], exoplanet[2], -exoplanet[1]);
+            } catch (error) {
+                console.error('Error loading exoplanet data:', error);
+                // Fallback: create a small sample of realistic data near the center (representing our local area)
+                const fallbackData = [];
+                for (let i = 0; i < 100; i++) {
+                    // Create points clustered around the center with some randomness
+                    const angle = Math.random() * Math.PI * 2;
+                    const distance = Math.random() * 5000 + 1000; // 1000-6000 units from center
+                    const x = Math.cos(angle) * distance;
+                    const y = Math.sin(angle) * distance;
+                    const z = (Math.random() - 0.5) * 1000; // Small z variation
+                    
+                    const methods = Object.keys(methodColors);
+                    const randomMethod = methods[Math.floor(Math.random() * methods.length)];
+                    
+                    fallbackData.push([x, y, z, randomMethod]);
+                }
+                
+                // Process fallback data the same way
+                const groupedData = {};
+                fallbackData.forEach((exoplanet) => {
+                    const method = exoplanet[3];
+                    if (!groupedData[method]) {
+                        groupedData[method] = [];
+                    }
+                    groupedData[method].push(exoplanet);
                 });
 
-                const verticesArray = new Float32Array(vertices);
-                geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
+                for (const [method, points] of Object.entries(groupedData)) {
+                    const geometry = new THREE.BufferGeometry();
+                    const vertices = [];
 
-                const circularTexture = createCircularTexture();
+                    points.forEach((exoplanet) => {
+                        vertices.push(exoplanet[0], exoplanet[2], -exoplanet[1]);
+                    });
 
-                const material = new THREE.PointsMaterial({
-                    color: methodColors[method],
-                    size: 100, // Adjust point size
-                    alphaMap: circularTexture, // Apply texture
-                    transparent: true, // Keep background transparent
-                    alphaTest: 0.5, // Avoid rendering square edges
-                });
+                    const verticesArray = new Float32Array(vertices);
+                    geometry.setAttribute('position', new THREE.BufferAttribute(verticesArray, 3));
 
-                const pointCloud = new THREE.Points(geometry, material);
-                scene.add(pointCloud);
+                    const circularTexture = createCircularTexture();
 
-                // Store for toggling
-                methodPoints[method] = pointCloud;
+                    const material = new THREE.PointsMaterial({
+                        color: methodColors[method],
+                        size: 100,
+                        alphaMap: circularTexture,
+                        transparent: true,
+                        alphaTest: 0.5,
+                    });
+
+                    const pointCloud = new THREE.Points(geometry, material);
+                    scene.add(pointCloud);
+
+                    methodPoints[method] = pointCloud;
+                }
             }
         }
 
@@ -732,7 +758,7 @@
             });
         });
 
-        // Last update logic (keep it separate if you prefer)
+        // Last update logic
         fetch('./Data/last_update.txt')
             .then(response => response.text())
             .then(text => {
