@@ -47,7 +47,7 @@
             border-radius: 8px;
             z-index: 11;
             max-width: 300px;
-            max-height: calc(100vh - 40px); /* Better mobile height calculation */
+            max-height: calc(100vh - 40px);
             overflow-y: auto;
             word-wrap: break-word;
         }
@@ -55,16 +55,23 @@
         /* Mobile-specific adjustments */
         @media (max-width: 768px) {
             #controls {
-                position: fixed; /* Use fixed positioning on mobile */
+                position: fixed;
                 top: 10px;
                 right: 10px;
                 max-width: calc(100vw - 40px);
                 max-height: calc(100vh - 80px);
+                /* Remove overflow-y: auto from here on mobile to prevent double scrolling */
+                overflow-y: visible;
             }
             
             #main-title {
-                position: fixed; /* Use fixed positioning on mobile */
+                position: fixed;
                 max-width: calc(100vw - 40px);
+                font-size: 0.9em; /* Slightly smaller on mobile */
+            }
+            
+            #main-title h1 {
+                font-size: 1.5em; /* Smaller title on mobile */
             }
         }
 
@@ -77,13 +84,27 @@
         }
 
         #controls-content {
-            max-height: 500px;
-            overflow: hidden;
+            /* Removed fixed max-height that was causing clipping */
+            overflow: visible;
             transition: max-height 0.3s ease-out;
         }
 
         #controls-content.collapsed {
             max-height: 0;
+            overflow: hidden; /* Only hide overflow when collapsed */
+        }
+
+        /* Mobile-specific controls content */
+        @media (max-width: 768px) {
+            #controls-content {
+                /* Allow natural height expansion on mobile */
+                max-height: none;
+            }
+            
+            #controls-content.collapsed {
+                max-height: 0;
+                overflow: hidden;
+            }
         }
 
         .arrow {
@@ -123,10 +144,17 @@
 
         #controls li {
             margin: 5px 0;
+            /* Ensure adequate touch targets on mobile */
+            min-height: 24px;
+            display: flex;
+            align-items: center;
         }
 
         #controls input[type="checkbox"] {
             margin-right: 5px;
+            /* Larger touch targets on mobile */
+            min-width: 16px;
+            min-height: 16px;
         }
 
         #controls label {
@@ -134,6 +162,10 @@
             align-items: center;
             gap: 5px;
             flex-wrap: wrap;
+            cursor: pointer;
+            /* Better touch targets */
+            min-height: 24px;
+            width: 100%;
         }
 
         #legend-list li:not(.all-method) {
@@ -199,6 +231,19 @@
 
         #source-link a:hover {
             text-decoration: underline;
+        }
+
+        /* Additional mobile improvements */
+        @media (max-width: 768px) {
+            #update-date {
+                font-size: 0.8em;
+                padding: 6px 8px;
+            }
+            
+            #source-link {
+                font-size: 0.8em;
+                padding: 6px 8px;
+            }
         }
     </style>
 </head>
@@ -748,9 +793,15 @@
             const controlsContent = document.getElementById('controls-content');
             const arrow = controlsTitle.querySelector('.arrow');
 
-            // The menu should start uncollapsed, so no 'collapsed' class initially
-            controlsContent.classList.add('collapsed');
-            arrow.classList.remove('up'); // Arrow points up when uncollapsed
+            // Start expanded on mobile for better usability
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                controlsContent.classList.remove('collapsed');
+                arrow.classList.add('up');
+            } else {
+                controlsContent.classList.add('collapsed');
+                arrow.classList.remove('up');
+            }
 
             controlsTitle.addEventListener('click', () => {
                 controlsContent.classList.toggle('collapsed');
