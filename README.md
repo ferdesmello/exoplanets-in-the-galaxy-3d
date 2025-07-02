@@ -47,7 +47,7 @@ Ctrl+C
 ```
 
 ## The illustration of our Galaxy
-The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/). And the annotated version can be found [here](https://www.eso.org/public/images/eso1339e/).
+The Illustration for our Galaxy comes from [here](https://www.eso.org/public/images/eso1339g/). And the annotated version can be found [here](https://www.eso.org/public/images/eso1339e/). The extruded galaxy is built from a low-resolution black-and-white (also in the folder _Images_) version of the illustration, where the height of the mesh is set in function of how bright a pixel is in the image.
 
 ## For exoplanet archive information in retrieving data, see:
 ### Some documentation
