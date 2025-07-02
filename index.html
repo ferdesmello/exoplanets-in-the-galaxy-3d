@@ -440,6 +440,12 @@
                     }
                     galaxyPlane.material.map = texture;
                     galaxyPlane.material.needsUpdate = true;
+                    galaxyPlane.material.transparent = true;
+                    galaxyPlane.material.opacity = 1.0;
+                    galaxyPlane.material.depthWrite = false; // Crucial for transparency
+                    galaxyPlane.renderOrder = 1; // Render before points (points have renderOrder 2 implicitly by default or explicitly)
+                                                 // Ensure galaxyPlane renders before points, so points are on top.
+
                 } else {
                     // Create new galaxy plane
                     const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
@@ -494,8 +500,8 @@
             // Load BOTH images
             const colorTexture = textureLoader.load('./Images/MW_transparent_small.png');
             const heightTexture = textureLoader.load('./Images/MW_transparent_small_BW4b.png', (texture) => {
-                const widthSegments = 256;
-                const heightSegments = 256;
+                const widthSegments = 512;
+                const heightSegments = 512;
 
                 const geometry = new THREE.PlaneGeometry(
                     config.galaxySize, config.galaxySize,
@@ -611,6 +617,7 @@
                     });
 
                     const pointCloud = new THREE.Points(geometry, material);
+                    pointCloud.renderOrder = 0; // Ensure points are rendered before the galaxy plane
                     scene.add(pointCloud);
 
                     // Store for toggling
