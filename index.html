@@ -6,6 +6,7 @@
     <style>
         body {
             margin: 0;
+            overflow: hidden; /* Prevent body scrolling */
         }
 
         canvas {
@@ -22,6 +23,7 @@
             font-family: Arial, sans-serif;
             z-index: 10;
             border-radius: 8px;
+            max-width: 400px; /* Limit width on larger screens */
         }
 
         #main-title h1 {
@@ -35,9 +37,9 @@
             line-height: 1.5;
         }
 
-        /* Fixed controls box for mobile */
+        /* Controls box - default for wider screens */
         #controls {
-            position: absolute;
+            position: absolute; /* Default position for wide screens */
             top: 10px;
             right: 10px;
             background: rgba(0, 0, 0, 0.8);
@@ -47,64 +49,77 @@
             border-radius: 8px;
             z-index: 11;
             max-width: 300px;
-            max-height: calc(100vh - 40px);
-            overflow-y: auto;
             word-wrap: break-word;
         }
 
-        /* Mobile-specific adjustments */
-        @media (max-width: 768px) {
-            #controls {
-                position: fixed;
-                top: 10px;
-                right: 10px;
-                max-width: calc(100vw - 40px);
-                max-height: calc(100vh - 80px);
-                /* Remove overflow-y: auto from here on mobile to prevent double scrolling */
-                overflow-y: visible;
-            }
-            
+        /* Collapsible content (always applies, but overridden by .collapsed) */
+        #controls-content {
+            max-height: 1000px; /* Large enough to show all content when expanded */
+            overflow: hidden; /* Default to hidden to ensure it works with max-height */
+            transition: max-height 0.3s ease-out; /* Smooth transition for expand/collapse */
+        }
+
+        /* This is the key: when 'collapsed' class is present, enforce zero height */
+        #controls-content.collapsed {
+            max-height: 0;
+            overflow: hidden; /* Absolutely ensure content is hidden */
+        }
+
+
+        /* Portrait or mobile mode adjustments */
+        @media (orientation: portrait) {
             #main-title {
-                position: fixed;
-                max-width: calc(100vw - 40px);
-                font-size: 0.9em; /* Slightly smaller on mobile */
+                position: fixed; /* Keep title visible when scrolling */
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%); /* Center the title */
+                width: calc(100% - 40px); /* Full width with padding */
+                max-width: none; /* Remove max-width in portrait */
+                text-align: center; /* Center text within title box */
+                padding: 10px; /* Slightly less padding for compactness */
+                font-size: 0.9em;
+            }
+
+            #main-title h1 {
+                font-size: 1.4em; /* Smaller title on mobile */
+                margin-bottom: 5px;
+            }
+
+            #main-title p {
+                font-size: 0.9em; /* Smaller subtitle */
+            }
+
+            #controls {
+                position: fixed; /* Keep controls visible when scrolling */
+                top: auto; /* Remove top constraint */
+                bottom: 35px; /* Position at the bottom */
+                left: 50%;
+                transform: translateX(-50%); /* Center the controls */
+                width: calc(100% - 40px); /* Full width with padding */
+                max-width: none; /* Remove max-width in portrait */
+                z-index: 15; /* Ensure controls are always on top in mobile */
             }
             
-            #main-title h1 {
-                font-size: 1.5em; /* Smaller title on mobile */
+            /* For portrait, the expanded max-height can be more constrained */
+            #controls-content:not(.collapsed) {
+                max-height: 70vh; /* Adjust as needed, limits height when expanded in portrait */
+                overflow-y: auto; /* Allow scrolling when expanded if content exceeds 70vh */
+                padding-bottom: 20px; /* Add some padding at the bottom of the scrollable area */
+            }
+
+            #controls h3 {
+                justify-content: center; /* Center the "Controls" title */
+                margin-bottom: 10px; /* Add some space below the title in mobile */
             }
         }
 
+        /* General control styling */
         #controls h3 {
             margin: 0 0 10px 0;
             cursor: pointer;
             display: flex;
             font-size: 2.0em;
             align-items: center;
-        }
-
-        #controls-content {
-            /* Removed fixed max-height that was causing clipping */
-            overflow: visible;
-            transition: max-height 0.3s ease-out;
-        }
-
-        #controls-content.collapsed {
-            max-height: 0;
-            overflow: hidden; /* Only hide overflow when collapsed */
-        }
-
-        /* Mobile-specific controls content */
-        @media (max-width: 768px) {
-            #controls-content {
-                /* Allow natural height expansion on mobile */
-                max-height: none;
-            }
-            
-            #controls-content.collapsed {
-                max-height: 0;
-                overflow: hidden;
-            }
         }
 
         .arrow {
@@ -144,7 +159,6 @@
 
         #controls li {
             margin: 5px 0;
-            /* Ensure adequate touch targets on mobile */
             min-height: 24px;
             display: flex;
             align-items: center;
@@ -152,7 +166,6 @@
 
         #controls input[type="checkbox"] {
             margin-right: 5px;
-            /* Larger touch targets on mobile */
             min-width: 16px;
             min-height: 16px;
         }
@@ -163,7 +176,6 @@
             gap: 5px;
             flex-wrap: wrap;
             cursor: pointer;
-            /* Better touch targets */
             min-height: 24px;
             width: 100%;
         }
@@ -185,7 +197,8 @@
             margin-top: 10px;
         }
 
-        #loading-textures {
+        #loading-textures,
+        #loading-mesh {
             position: absolute;
             bottom: 20px;
             left: 50%;
@@ -209,7 +222,7 @@
             color: white;
             font-family: Arial, sans-serif;
             border-radius: 6px;
-            z-index: 20;
+            z-index: 5;
         }
 
         #source-link {
@@ -221,7 +234,7 @@
             color: white;
             font-family: Arial, sans-serif;
             border-radius: 6px;
-            z-index: 20;
+            z-index: 5;
         }
 
         #source-link a {
@@ -235,14 +248,21 @@
 
         /* Additional mobile improvements */
         @media (max-width: 768px) {
-            #update-date {
-                font-size: 0.8em;
-                padding: 6px 8px;
-            }
-            
+            #update-date,
             #source-link {
                 font-size: 0.8em;
                 padding: 6px 8px;
+                z-index: 5; /* Reconfirm z-index for these elements */
+            }
+            #update-date {
+                left: 5%;
+                transform: translateX(-5%);
+                bottom: 5px;
+            }
+            #source-link {
+                right: 5%; 
+                transform: translateX(5%);
+                bottom: 5px;
             }
         }
     </style>
@@ -251,7 +271,7 @@
 <body>
     <div id="main-title">
         <h1>Distribution of Exoplanets Discovered in Our Galaxy</h1>
-        <p>An interactive visualization of exoplanets by detection method.</p>
+        <p>An interactive visualization of exoplanets by detection method</p>
     </div>
 
     <div id="controls">
@@ -270,22 +290,30 @@
                 </ul>
             </div>
 
-            <div id="galaxy-annotations-section">
-                <h4>Galaxy Annotations</h4>
+            <div id="galaxy-section">
+                <h4>Galaxy</h4>
                 <div>
                     <label>
-                        <input type="checkbox" id="toggle-galaxy-annotations">
-                        Show Annotations
+                        <input type="radio" name="galaxy-mode" id="galaxy-2d" checked>
+                        2D Galaxy
                     </label>
                 </div>
-            </div>
-
-            <div id="galaxy-3d-section">
-                <h4>3D Galaxy</h4>
-                <div id="toggle-3d-container">
+                <div>
                     <label>
-                        <input type="checkbox" id="toggle-3d-galaxy">
-                        Extrude Galaxy
+                        <input type="radio" name="galaxy-mode" id="galaxy-2d-annotated">
+                        2D Galaxy with Annotations
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio" name="galaxy-mode" id="galaxy-3d">
+                        3D Galaxy (Extruded)
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio" name="galaxy-mode" id="galaxy-none">
+                        No Galaxy
                     </label>
                 </div>
             </div>
@@ -293,6 +321,8 @@
     </div>
 
     <div id="loading-textures">Loading textures...</div>
+
+    <div id="loading-mesh">Loading mesh...</div>
 
     <div id="update-date">
         Last update: <span id="last-update">Loading...</span>
@@ -391,8 +421,11 @@
             // Add galaxy plane
             createGalaxyPlane();
 
-            const toggle3DCheckbox = document.getElementById('toggle-3d-galaxy');
-            toggle3DCheckbox.addEventListener('change', toggleGalaxyMode);
+            // Add change of galaxy mode event listeners
+            const galaxyModeRadios = document.querySelectorAll('input[name="galaxy-mode"]');
+            galaxyModeRadios.forEach(radio => {
+                radio.addEventListener('change', handleGalaxyModeChange);
+            });
 
             // Load and plot exoplanets
             await loadExoplanets();
@@ -407,25 +440,19 @@
             const allCheckbox = document.getElementById('all-checkbox');
             allCheckbox.checked = true; // Start with "All" checked
             toggleAllExoplanets({ target: allCheckbox }); // Force update
-
-            // Add event listener for galaxy annotations toggle
-            const toggleAnnotationsCheckbox = document.getElementById('toggle-galaxy-annotations');
-            toggleAnnotationsCheckbox.addEventListener('change', toggleGalaxyAnnotations);
         }
 
         //-------------------------------------------------------------------------------
         // Fixed createGalaxyPlane function with proper preview/loading handling
-        function createGalaxyPlane() {
+        function createGalaxyPlane(showAnnotations = false) {
             const loadingMsg = document.getElementById('loading-textures');
             if (loadingMsg) loadingMsg.style.display = 'block'; // Always show loading
-
-            const isAnnotated = document.getElementById('toggle-galaxy-annotations')?.checked;
             
-            const previewPath = isAnnotated
+            const previewPath = showAnnotations
                 ? './Images/MW_transparent_annotated_preview.png'
                 : './Images/MW_transparent_preview.png';
 
-            const highResPath = isAnnotated
+            const highResPath = showAnnotations
                 ? './Images/MW_transparent_annotated_small.png'
                 : './Images/MW_transparent_small.png';
 
@@ -480,22 +507,12 @@
         }
 
         //-------------------------------------------------------------------------------
-        // Function to toggle galaxy annotations
-        function toggleGalaxyAnnotations(event) {
-            // If in 3D mode, do nothing or disable the checkbox.
-            // For now, if 3D is active, we just don't load a new 2D texture.
-            if (document.getElementById('toggle-3d-galaxy').checked) {
-                return;
-            }
-
-            // Call createGalaxyPlane to handle the loading of preview and high-res
-            // based on the new annotation state.
-            createGalaxyPlane();
-        }
-
-        //-------------------------------------------------------------------------------
         function createGalaxyHeightMesh() {
             const textureLoader = new THREE.TextureLoader();
+            const loadingMeshMsg = document.getElementById('loading-mesh');
+
+            // Show loading message
+            if (loadingMeshMsg) loadingMeshMsg.style.display = 'block';
 
             // Load BOTH images
             const colorTexture = textureLoader.load('./Images/MW_transparent_small.png');
@@ -546,7 +563,47 @@
                 galaxyHeightMesh.rotation.x = -Math.PI / 2;
                 galaxyHeightMesh.renderOrder = 2;
                 scene.add(galaxyHeightMesh);
+
+                    // Hide loading message after mesh is created
+                    if (loadingMeshMsg) loadingMeshMsg.style.display = 'none';
+                }, undefined, (error) => {
+                    // Hide loading message on error
+                    console.error('Error loading height texture:', error);
+                    if (loadingMeshMsg) loadingMeshMsg.style.display = 'none';
             });
+        }
+
+        //-------------------------------------------------------------------------------
+        function handleGalaxyModeChange(event) {
+            const selectedMode = event.target.id;
+            
+            // Remove all existing galaxy objects
+            if (galaxyPlane) {
+                scene.remove(galaxyPlane);
+                galaxyPlane = null;
+            }
+            if (galaxyHeightMesh) {
+                scene.remove(galaxyHeightMesh);
+                scene.remove(galaxyHeightMeshMirror);
+                galaxyHeightMesh = null;
+                galaxyHeightMeshMirror = null;
+            }
+            
+            // Create appropriate galaxy based on selection
+            switch(selectedMode) {
+                case 'galaxy-2d':
+                    createGalaxyPlane(false); // Pass false for no annotations
+                    break;
+                case 'galaxy-2d-annotated':
+                    createGalaxyPlane(true); // Pass true for annotations
+                    break;
+                case 'galaxy-3d':
+                    createGalaxyHeightMesh();
+                    break;
+                case 'galaxy-none':
+                    // Do nothing - no galaxy displayed
+                    break;
+            }
         }
 
         //-------------------------------------------------------------------------------
@@ -798,21 +855,15 @@
         document.addEventListener('DOMContentLoaded', () => {
             const controlsTitle = document.getElementById('controls-title');
             const controlsContent = document.getElementById('controls-content');
-            const arrow = controlsTitle.querySelector('.arrow');
 
-            // Start expanded on mobile for better usability
-            const isMobile = window.innerWidth <= 768;
-            if (isMobile) {
-                controlsContent.classList.remove('collapsed');
-                arrow.classList.add('up');
-            } else {
-                controlsContent.classList.add('collapsed');
-                arrow.classList.remove('up');
-            }
+            // **ALWAYS** start the controls content in a collapsed state
+            controlsContent.classList.add('collapsed');
+            controlsTitle.querySelector('.arrow').classList.add('up'); // Ensure arrow points up
 
+            // Add event listener for the click to toggle
             controlsTitle.addEventListener('click', () => {
                 controlsContent.classList.toggle('collapsed');
-                arrow.classList.toggle('up');
+                controlsTitle.querySelector('.arrow').classList.toggle('up');
             });
         });
 
