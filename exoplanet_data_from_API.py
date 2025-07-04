@@ -17,11 +17,10 @@ ctx.verify_mode = ssl.CERT_NONE
 
 address = service_url
 querytap = "/TAP/sync?query="
-query = "select+sy_dist,glat,glon,discoverymethod"
+query = "select+sy_dist,glat,glon,ra,dec,discoverymethod"
 ending = "+from+pscomppars&format=json"
 
 url = service_url + querytap + query + ending
-
 
 #--------------------------------------------------------------------
 # Read the data
@@ -42,6 +41,9 @@ sy_dist = list()
 glat = list()
 glon = list()
 meth = list()
+l = list()
+b = list()
+
 
 count_exoplanets_distance = 0
 count_exoplanets_others = 0
@@ -55,6 +57,9 @@ for item in js :
     except :
         count_exoplanets_others += 1
         continue
+
+    l.append(float(item["glon"]))
+    b.append(float(item["glat"]))
 
 exoplanets = count_exoplanets_distance + count_exoplanets_others
 print(f"Number of exoplanets discovered: {exoplanets}")
@@ -123,6 +128,23 @@ except:
 
 for item in range(len(sy_dist)) :
     fout.write(str("{:.3f}".format(X[item]) + ";" + str("{:.3f}".format(Y[item])) + ";" + str("{:.3f}".format(Z[item])) + ";" + str("{}".format(M[item])) + "\n"))
+# The "{:.3f}".format() inside the str() is to format the float to 3 decimal algarisms
+
+fout.close()
+
+#--------------------------------------------------------------------
+fname = "./Data/exoplanets_coordinates_l_b.txt"
+
+print("Writing on:", fname)
+
+try:
+    fout = open(fname, "w")
+except:
+    print("File cannot be opened:", fname)
+    exit()
+
+for item in range(len(l)) :
+    fout.write(str("{:.3f}".format(l[item]) + " " + str("{:.3f}".format(b[item])) + "\n"))
 # The "{:.3f}".format() inside the str() is to format the float to 3 decimal algarisms
 
 fout.close()
