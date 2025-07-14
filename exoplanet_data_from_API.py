@@ -4,6 +4,7 @@ import ssl
 import math
 from collections import Counter
 from datetime import datetime
+import re
 
 #--------------------------------------------------------------------
 # Define the url
@@ -156,7 +157,29 @@ fdate = "./Data/last_update.txt"
 print("Writing on:", fdate)
 
 with open(fdate, 'w') as f:
-    f.write(f'LAST_UPDATE={datetime.now().isoformat()}')
+    f.write(f'LAST_UPDATE={datetime.now().date().isoformat()}')
+
+#--------------------------------------------------------------------
+fdate = "./README.md"
+
+# Write the last update time to "README.md"
+print("Writing on:", fdate)
+
+# Load README.md
+with open(fdate, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+# Replace the date between the comment tags
+today = datetime.now().date().isoformat()
+new_content = re.sub(
+    r'<!--LAST_UPDATE-->.*?<!--END_LAST_UPDATE-->',
+    f'<!--LAST_UPDATE-->{today}<!--END_LAST_UPDATE-->',
+    content
+)
+
+# Save README.md
+with open('README.md', 'w', encoding='utf-8') as f:
+    f.write(new_content)
 
 #--------------------------------------------------------------------
 print("All done.")
