@@ -855,7 +855,8 @@
                 const match = text.match(/LAST_UPDATE=(.*)/);
                 if (match) {
                     const dateString = match[1];
-                    const dateObj = new Date(dateString);
+                    const [year, month, day] = dateString.split('-').map(Number);
+                    const dateObj = new Date(year, month - 1, day); // month is 0-based
                     const formattedDate = dateObj.toLocaleDateString('en-US', {
                         year: 'numeric',
                         month: 'long',
