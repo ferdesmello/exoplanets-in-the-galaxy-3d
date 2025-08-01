@@ -7,7 +7,7 @@ Access the interactive visualization in your browser going [here](https://ferdes
 
 Also, the files are being update monthly with the newly discovered exoplanets in the [exoplanet archive](https://exoplanetarchive.ipac.caltech.edu/). 
 
-Date of the last (automatic) update: <!--LAST_UPDATE-->2025-07-14<!--END_LAST_UPDATE-->
+Date of the last (automatic) update: <!--LAST_UPDATE-->2025-08-01<!--END_LAST_UPDATE-->
 
 ![Update Exoplanet Data](https://github.com/ferdesmello/exoplanets-in-the-galaxy-3d/actions/workflows/update.yml/badge.svg)
 
