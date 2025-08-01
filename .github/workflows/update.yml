@@ -27,7 +27,7 @@ jobs:
     - name: Run update scripts
       run: |
         python exoplanet_data_from_API.py
-        python flat_galaxy_map.py
+        python flat_galaxy_maps.py
         python from_TXT_to_JSON.py
 
     - name: Update last update date
