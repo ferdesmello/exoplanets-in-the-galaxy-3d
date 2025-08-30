@@ -76,7 +76,6 @@ lpx = [width * 2 - lx for lx in lpx_flipped]
 # Create a new image object for drawing
 print('Operating')
 
-#image = image.rotate(-90, expand=True)
 draw = ImageDraw.Draw(MW_fo)
 
 # Draw a green dot at each coordinate
