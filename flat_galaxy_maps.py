@@ -74,7 +74,7 @@ lpx = [width * 2 - lx for lx in lpx_flipped]
 # Operating on data--------------------------------------------------
 #--------------------------------------------------------------------
 # Create a new image object for drawing
-print('Operating')
+print('Operating...')
 
 draw = ImageDraw.Draw(MW_fo)
 

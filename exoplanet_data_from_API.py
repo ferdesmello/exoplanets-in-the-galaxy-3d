@@ -1,10 +1,10 @@
 import urllib.request
 import json
 import ssl
-import math
-from collections import Counter
 from datetime import datetime
 import re
+import pandas as pd
+import numpy as np
 
 #--------------------------------------------------------------------
 # Define the url
@@ -18,7 +18,7 @@ ctx.verify_mode = ssl.CERT_NONE
 
 address = service_url
 querytap = "/TAP/sync?query="
-query = "select+sy_dist,glat,glon,ra,dec,discoverymethod"
+query = "select+hostname,pl_name,sy_dist,glat,glon,ra,dec,discoverymethod"
 ending = "+from+pscomppars&format=json"
 
 url = service_url + querytap + query + ending
@@ -26,135 +26,116 @@ url = service_url + querytap + query + ending
 #--------------------------------------------------------------------
 # Read the data
 
-print("Retrieving", url)
+print("Retrieving:\n", url, "\n")
 
 uh = urllib.request.urlopen(url, context=ctx)
 data = uh.read().decode()
-print("Retrieved", len(data), "characters")
+print("Retrieved", len(data), "characters\n")
 
 try:
     js = json.loads(data)
 except:
     js = None
 
-# The data (distance, coordinates, technique) we will keep-------------------
-sy_dist = list()
-glat = list()
-glon = list()
-meth = list()
-l = list()
-b = list()
+#--------------------------------------------------------------------
+# Convert directly to DataFrame
+df = pd.DataFrame(js)
 
+# Keep only relevant columns and rename them
+df = df.rename(columns={
+    "hostname": "sname",
+    "pl_name": "pname",
+    "sy_dist": "sdist",
+    "glat": "glat",
+    "glon": "glon",
+    "discoverymethod": "method"
+})
 
-count_exoplanets_distance = 0
-count_exoplanets_others = 0
-for item in js :
-    try : # Some distances are "none" and not of our interest (and they will break the appending)
-        sy_dist.append(float(item["sy_dist"]))
-        glat.append(float(item["glat"]))
-        glon.append(float(item["glon"]))
-        meth.append(str(item["discoverymethod"]))
-        count_exoplanets_distance += 1
-    except :
-        count_exoplanets_others += 1
-        continue
+# Ensure numeric columns are floats and keep NaNs
+df["sdist"] = pd.to_numeric(df["sdist"], errors="coerce")
+df["glat"] = pd.to_numeric(df["glat"], errors="coerce")
+df["glon"] = pd.to_numeric(df["glon"], errors="coerce")
 
-    l.append(float(item["glon"]))
-    b.append(float(item["glat"]))
+#--------------------------------------------------------------------
+# Print summary statistics
 
-exoplanets = count_exoplanets_distance + count_exoplanets_others
-print(f"Number of exoplanets discovered: {exoplanets}")
-print(f"Number of exoplanets with distance determined: {count_exoplanets_distance}")
-print(Counter(meth))
+number_of_planets = df['pname'].nunique()
+number_of_stars = df['sname'].nunique()
+methods_all = df['method'].value_counts()
+
+print(f"Number of exoplanets discovered: {number_of_planets}")
+print(f"Number of stars with discovered exoplanets: {number_of_stars}")
+print(methods_all, "\n")
+
+# Delete rows with no distance information
+df = df.dropna(subset=["sdist"])
+
+planets_with_distance = df['pname'].nunique()
+stars_with_distance = df['sname'].nunique()
+methods_dist = df['method'].value_counts()
+
+print(f"Number of those exoplanets with distance determined: {planets_with_distance}")
+print(f"Number of those stars with distance determined: {stars_with_distance}")
+print(methods_dist, "\n")
 
 #--------------------------------------------------------------------
 # Operate on data
 
 print("Operating on data")
 
-X = list()
-Y = list()
-Z = list()
-M = list()
-Mset = set(meth)
-
 pctoly = 3.26156 # Convertion of parsec to light years
 Dcg = 26000 # Distance of the Solar System to center of the Galaxy in light years
 
 # Going from spherical galactic coordinates to cartesian and rotating
 # and 90° counter clockwise in the plane for the images
-for item in range(len(sy_dist)) :
-    # Original transformations
-    original_X = sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.cos(math.radians(glon[item]))-Dcg
-    original_Y = sy_dist[item]*pctoly*math.cos(math.radians(glat[item]))*math.sin(math.radians(glon[item]))
-    original_Z = sy_dist[item]*pctoly*math.sin(math.radians(glat[item]))
 
-    # Apply 90 degrees counter-clockwise rotation:
-    # new_X = -original_Y
-    # new_Y = original_X
-    X.append(-original_Y)  # New X is the negative of the original Y
-    Y.append(original_X)   # New Y is the original X
-    Z.append(original_Z)   # Z remains the same
-    M.append(meth[item])
+# Original transformations
+df["original_X"] = df["sdist"]*pctoly*np.cos(np.radians(df["glat"]))*np.cos(np.radians(df["glon"]))-Dcg
+df["original_Y"] = df["sdist"]*pctoly*np.cos(np.radians(df["glat"]))*np.sin(np.radians(df["glon"]))
+df["original_Z"] = df["sdist"]*pctoly*np.sin(np.radians(df["glat"]))
+
+# Apply 90 degrees counter-clockwise rotation:
+# new_X = -original_Y
+# new_Y = original_X
+df["X"] = -df["original_Y"]  # New X is the negative of the original Y
+df["Y"] = df["original_X"]   # New Y is the original X
+df["Z"] = df["original_Z"]   # Z remains the same
+Methods = set(df['method'])
 
 #--------------------------------------------------------------------
 # Write in the exit file
 
 fname = "./Data/exoplanets_coordinates.txt"
+print("  Writing on:", fname)
+selected_columns = ['X', 'Y', 'Z']
+df[selected_columns].to_csv(fname, 
+                            sep=" ",
+                            header=False,  
+                            index=False) 
 
-print("Writing on:", fname)
-
-try:
-    fout = open(fname, "w")
-except:
-    print("File cannot be opened:", fname)
-    exit()
-
-for item in range(len(sy_dist)) :
-    fout.write(str("{:.3f}".format(X[item]) + " " + str("{:.3f}".format(Y[item])) + " " + str("{:.3f}".format(Z[item])) + "\n"))
-# The "{:.3f}".format() inside the str() is to format the float to 3 decimal algarisms
-
-fout.close()
-
-#--------------------------------------------------------------------
+#------------------------------------
 fname = "./Data/exoplanets_coordinates_methods.txt"
+print("  Writing on:", fname)
+selected_columns = ['X', 'Y', 'Z', 'method']
+df[selected_columns].to_csv(fname, 
+                            sep=";",
+                            header=False, 
+                            index=False) 
 
-print("Writing on:", fname)
-
-try:
-    fout = open(fname, "w")
-except:
-    print("File cannot be opened:", fname)
-    exit()
-
-for item in range(len(sy_dist)) :
-    fout.write(str("{:.3f}".format(X[item]) + ";" + str("{:.3f}".format(Y[item])) + ";" + str("{:.3f}".format(Z[item])) + ";" + str("{}".format(M[item])) + "\n"))
-# The "{:.3f}".format() inside the str() is to format the float to 3 decimal algarisms
-
-fout.close()
-
-#--------------------------------------------------------------------
+#------------------------------------
 fname = "./Data/exoplanets_coordinates_l_b.txt"
-
-print("Writing on:", fname)
-
-try:
-    fout = open(fname, "w")
-except:
-    print("File cannot be opened:", fname)
-    exit()
-
-for item in range(len(l)) :
-    fout.write(str("{:.3f}".format(l[item]) + " " + str("{:.3f}".format(b[item])) + "\n"))
-# The "{:.3f}".format() inside the str() is to format the float to 3 decimal algarisms
-
-fout.close()
+print("  Writing on:", fname)
+selected_columns = ['glon', 'glat']
+df[selected_columns].to_csv(fname, 
+                            sep=" ", 
+                            header=False, 
+                            index=False) 
 
 #--------------------------------------------------------------------
 fdate = "./Data/last_update.txt"
 
 # Write the last update time to "last_update.txt"
-print("Writing on:", fdate)
+print("  Writing on:", fdate)
 
 with open(fdate, 'w') as f:
     f.write(f'LAST_UPDATE={datetime.now().date().isoformat()}')
@@ -163,23 +144,59 @@ with open(fdate, 'w') as f:
 fdate = "./README.md"
 
 # Write the last update time to "README.md"
-print("Writing on:", fdate)
+print("  Writing on:", fdate)
 
 # Load README.md
 with open(fdate, 'r', encoding='utf-8') as f:
     content = f.read()
 
-# Replace the date between the comment tags
+new_content = content
+
+#------------------------------------
+# number of stars
+new_content = re.sub(
+    r'<!--STARS-->.*?<!--STARS-->',
+    f'<!--STARS-->{number_of_stars}<!--STARS-->',
+    new_content
+)
+
+#------------------------------------
+# number of planets
+new_content = re.sub(
+    r'<!--EXOPLANETS-->.*?<!--EXOPLANETS-->',
+    f'<!--EXOPLANETS-->{number_of_planets}<!--EXOPLANETS-->',
+    new_content
+)
+
+#------------------------------------
+# number of stars with distance
+new_content = re.sub(
+    r'<!--SDIST-->.*?<!--SDIST-->',
+    f'<!--SDIST-->{stars_with_distance}<!--SDIST-->',
+    new_content
+)
+
+#------------------------------------
+# number of planets with distance
+new_content = re.sub(
+    r'<!--PDIST-->.*?<!--PDIST-->',
+    f'<!--PDIST-->{planets_with_distance}<!--PDIST-->',
+    new_content
+)
+
+#------------------------------------
+# update date of last update
 today = datetime.now().date().isoformat()
 new_content = re.sub(
     r'<!--LAST_UPDATE-->.*?<!--END_LAST_UPDATE-->',
     f'<!--LAST_UPDATE-->{today}<!--END_LAST_UPDATE-->',
-    content
+    new_content
 )
 
-# Save README.md
-with open('README.md', 'w', encoding='utf-8') as f:
+#------------------------------------
+with open(fdate, 'w', encoding='utf-8') as f:
     f.write(new_content)
+
 
 #--------------------------------------------------------------------
 print("All done.")
