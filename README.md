@@ -3,13 +3,13 @@
 ## Overview
 Thousands of exoplanets have been discovered, most of them not so far from the Sun considering the galactic scale. This distribution is mostly because the methods used for detection can more easily detect exoplanets close to us or exoplanets with certain characteristics, not because all exoplanets are really distributed close to us. Curious about what area of our Galaxy we were able to map for exoplanets, I made this interactive visualization. You may see that, until now, we just mapped a very small region of our Galaxy.
 
-There have been <!--EXOPLANETS-->6042<!--EXOPLANETS--> exoplanets discovered around <!--STARS-->4507<!--STARS--> stars. But only <!--SDIST-->4481<!--SDIST--> of those stars have had their distance to us determined, totaling <!--PDIST-->6016<!--PDIST--> exoplanets in the visualization.
+There have been <!--EXOPLANETS-->6045<!--EXOPLANETS--> exoplanets discovered around <!--STARS-->4509<!--STARS--> stars. But only <!--SDIST-->4483<!--SDIST--> of those stars have had their distance to us determined, totaling <!--PDIST-->6019<!--PDIST--> exoplanets in the visualization.
 
 Access the interactive visualization in your browser going [here](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d/) or clicking on the image below.
 
 Also, the files are being update monthly with the newly discovered exoplanets in the [exoplanet archive](https://exoplanetarchive.ipac.caltech.edu/). 
 
-Date of the last (automatic) update: <!--LAST_UPDATE-->2025-11-01<!--END_LAST_UPDATE-->
+Date of the last (automatic) update: <!--LAST_UPDATE-->2025-11-15<!--END_LAST_UPDATE-->
 
 ![Update Exoplanet Data](https://github.com/ferdesmello/exoplanets-in-the-galaxy-3d/actions/workflows/update.yml/badge.svg)
 
