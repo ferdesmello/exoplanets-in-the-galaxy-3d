@@ -105,7 +105,7 @@ Methods = set(df['method'])
 #--------------------------------------------------------------------
 # Write in the exit file
 
-fname = "./Data/exoplanets_coordinates.txt"
+fname = "./data/exoplanets_coordinates.txt"
 print("  Writing on:", fname)
 selected_columns = ['X', 'Y', 'Z']
 df[selected_columns].to_csv(fname, 
@@ -114,7 +114,7 @@ df[selected_columns].to_csv(fname,
                             index=False) 
 
 #------------------------------------
-fname = "./Data/exoplanets_coordinates_methods.txt"
+fname = "./data/exoplanets_coordinates_methods.txt"
 print("  Writing on:", fname)
 selected_columns = ['X', 'Y', 'Z', 'method']
 df[selected_columns].to_csv(fname, 
@@ -123,7 +123,7 @@ df[selected_columns].to_csv(fname,
                             index=False) 
 
 #------------------------------------
-fname = "./Data/exoplanets_coordinates_l_b.txt"
+fname = "./data/exoplanets_coordinates_l_b.txt"
 print("  Writing on:", fname)
 selected_columns = ['glon', 'glat']
 df[selected_columns].to_csv(fname, 
@@ -132,7 +132,7 @@ df[selected_columns].to_csv(fname,
                             index=False) 
 
 #--------------------------------------------------------------------
-fdate = "./Data/last_update.txt"
+fdate = "./data/last_update.txt"
 
 # Write the last update time to "last_update.txt"
 print("  Writing on:", fdate)

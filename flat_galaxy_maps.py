@@ -2,15 +2,15 @@ from PIL import Image, ImageDraw
 
 # Reading the data---------------------------------------------------
 #--------------------------------------------------------------------
-fname_fo = "./Data/exoplanets_coordinates.txt"
-fname_eo = "./Data/exoplanets_coordinates_l_b.txt"
+fname_fo = "./data/exoplanets_coordinates.txt"
+fname_eo = "./data/exoplanets_coordinates_l_b.txt"
 
 # Load the images
 # Illustration of the Milky Way galaxy face on
-MW_fo = Image.open("./Images/Artist's_impression_of_the_Milky_Way_gna_small.jpg")
+MW_fo = Image.open("./images/Artist's_impression_of_the_Milky_Way_gna_small.jpg")
 
 # Picture of the Milky Way galaxy edge on (Equirectangular projection)
-MW_eo = Image.open("./Images/Milky_Way_edge_on.jpg")
+MW_eo = Image.open("./images/Milky_Way_edge_on.jpg")
 
 # Changing the coordinate system-------------------------------------
 #--------------------------------------------------------------------
@@ -99,10 +99,10 @@ for dot in range(len(lpx)):
 
 # Writing in exit file-----------------------------------------------
 #--------------------------------------------------------------------
-print('Saving: ./Images/MW_fo_dots.jpg and ./Images/MW_eo_dots.jpg')
+print('Saving: ./images/MW_fo_dots.jpg and ./images/MW_eo_dots.jpg')
 
-MW_fo.save("./Images/MW_fo_dots.jpg")
-MW_eo.save("./Images/MW_eo_dots.jpg")
+MW_fo.save("./images/MW_fo_dots.jpg")
+MW_eo.save("./images/MW_eo_dots.jpg")
 
 #--------------------------------------------------------------------
 print('All done.')

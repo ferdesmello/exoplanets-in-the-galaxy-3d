@@ -322,10 +322,10 @@
         const imageCache = {};
         
         const preloadImages = [
-            './Images/MW_transparent_preview.png',
-            './Images/MW_transparent_annotated_preview.png',
-            './Images/MW_transparent_small.png',
-            './Images/MW_transparent_annotated_small.png'
+            './images/MW_transparent_preview.png',
+            './images/MW_transparent_annotated_preview.png',
+            './images/MW_transparent_small.png',
+            './images/MW_transparent_annotated_small.png'
         ];
 
         // Enhanced preloading with caching
@@ -430,12 +430,12 @@
             if (loadingMsg) loadingMsg.style.display = 'block'; // Always show loading
             
             const previewPath = showAnnotations
-                ? './Images/MW_transparent_annotated_preview.png'
-                : './Images/MW_transparent_preview.png';
+                ? './images/MW_transparent_annotated_preview.png'
+                : './images/MW_transparent_preview.png';
 
             const highResPath = showAnnotations
-                ? './Images/MW_transparent_annotated_small.png'
-                : './Images/MW_transparent_small.png';
+                ? './images/MW_transparent_annotated_small.png'
+                : './images/MW_transparent_small.png';
 
             const textureLoader = new THREE.TextureLoader();
 
@@ -496,8 +496,8 @@
             if (loadingMeshMsg) loadingMeshMsg.style.display = 'block';
 
             // Load BOTH images
-            const colorTexture = textureLoader.load('./Images/MW_transparent_small.png');
-            const heightTexture = textureLoader.load('./Images/MW_transparent_small_BW4b.png', (texture) => {
+            const colorTexture = textureLoader.load('./images/MW_transparent_small.png');
+            const heightTexture = textureLoader.load('./images/MW_transparent_small_BW4b.png', (texture) => {
                 const widthSegments = 512;
                 const heightSegments = 512;
 
@@ -619,7 +619,7 @@
         //-------------------------------------------------------------------------------
         async function loadExoplanets() {
             try {
-                const response = await fetch('./Data/exoplanets_coordinates_methods.json');
+                const response = await fetch('./data/exoplanets_coordinates_methods.json');
                 const data = await response.json();
 
                 // Group data by method
@@ -849,7 +849,7 @@
         });
 
         // Last update logic
-        fetch('./Data/last_update.txt')
+        fetch('./data/last_update.txt')
             .then(response => response.text())
             .then(text => {
                 const match = text.match(/LAST_UPDATE=(.*)/);
