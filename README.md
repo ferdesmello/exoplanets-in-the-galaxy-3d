@@ -13,7 +13,7 @@ Date of the last (automatic) update: <!--LAST_UPDATE-->2025-11-15<!--END_LAST_UP
 
 ![Update Exoplanet Data](https://github.com/ferdesmello/exoplanets-in-the-galaxy-3d/actions/workflows/update.yml/badge.svg)
 
-[![Interactive visualization](./Images/Visualization.jpeg)](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d)
+[![Interactive visualization](./images/Visualization.jpeg)](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d)
 
 ## What the code does
 
@@ -23,11 +23,11 @@ Run **exoplanet_data_from_API.py** to retrieve data from [https://exoplanetarchi
 ### 2. Simple face-on and edge-on flat maps
 Run **flat_galaxy_maps.py** to retrieve data from _exoplanets_coordinates.txt_ and _Artist's_impression_of_the_Milky_Way_gna_small.jpg_ to make _MW_fo_dots.jpg_, 2D map of the distribution of exaplanets discovered in our Galaxy.
 
-![Representation of the positions of the exoplanets discovered in our Galaxy.](./Images/MW_fo_dots.jpg)
+![Representation of the positions of the exoplanets discovered in our Galaxy.](./images/MW_fo_dots.jpg)
 
 It also retrieves data from _exoplanets_coordinates_l_b.txt_ and _Milky_Way_edge_on.jpg_ to make _MW_eo_dots.jpg_, another 2D map of the distribution of exaplanets discovered in our Galaxy.
 
-![Representation of the positions of the exoplanets discovered in our Galaxy.](./Images/MW_eo_dots.jpg)
+![Representation of the positions of the exoplanets discovered in our Galaxy.](./images/MW_eo_dots.jpg)
 
 ### 3. From TXT to JSON
 Run **TXT_to_JSON.py** to retrieve data from _exoplanets_coordinates.txt_ and _exoplanets_coordinates_methods.txt_ and transform the data to JSON format in _exoplanets_coordinates.json_ and _exoplanets_coordinates_methods.json_. This is used in the interactive visualization.
