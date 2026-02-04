@@ -396,7 +396,9 @@
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
-            document.getElementById('all-checkbox').addEventListener('change', toggleAllExoplanets);
+
+            document.getElementById('all-checkbox')
+                .addEventListener('change', toggleAllExoplanets);
 
             // Camera position
             camera.position.set(0, 50000, 50000);
@@ -405,31 +407,29 @@
             controls = new THREE.OrbitControls(camera, renderer.domElement);
             controls.enableDamping = true;
             controls.dampingFactor = 0.5;
-            controls.minDistance = 50; // Minimum zoom distance
-            controls.maxDistance = 500000; // Maximum zoom distance
+            controls.minDistance = 50;
+            controls.maxDistance = 500000;
 
-            // Add galaxy plane
-            createGalaxyPlane();
-
-            // Add change of galaxy mode event listeners
+            // Galaxy mode listeners
             const galaxyModeRadios = document.querySelectorAll('input[name="galaxy-mode"]');
             galaxyModeRadios.forEach(radio => {
                 radio.addEventListener('change', handleGalaxyModeChange);
             });
 
-            // Load and plot exoplanets
-            await loadExoplanets();
+            // Load data FIRST
+            await loadExoplanets(); // Load and plot exoplanets
 
-            // Add Galactic North marker
-            addGalacticNorthMarker();
-
-            // Add interactive controls
+            // Scene decorations
+            addGalacticNorthMarker(); // Add Galactic North marker
             createControls(); // This function creates the checkboxes based on methods
 
             // Initialize "All" checkbox state
             const allCheckbox = document.getElementById('all-checkbox');
             allCheckbox.checked = true; // Start with "All" checked
             toggleAllExoplanets({ target: allCheckbox }); // Force update
+
+            // NOW force initial galaxy mode loading UI
+            handleGalaxyModeChange({ target: { id: 'galaxy-2d' } });
         }
 
         //-------------------------------------------------------------------------------
