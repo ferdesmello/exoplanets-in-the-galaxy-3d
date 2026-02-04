@@ -198,7 +198,8 @@
         }
 
         #loading-textures,
-        #loading-mesh {
+        #loading-mesh,
+        #loading-cloud {
             position: absolute;
             bottom: 20px;
             left: 50%;
@@ -276,19 +277,25 @@
                 <div>
                     <label>
                         <input type="radio" name="galaxy-mode" id="galaxy-2d" checked>
-                        2D Galaxy
+                        2D Illustration
                     </label>
                 </div>
                 <div>
                     <label>
                         <input type="radio" name="galaxy-mode" id="galaxy-2d-annotated">
-                        2D Galaxy with Annotations
+                        2D Annotations
                     </label>
                 </div>
                 <div>
                     <label>
-                        <input type="radio" name="galaxy-mode" id="galaxy-3d">
-                        3D Galaxy (Extruded)
+                        <input type="radio" name="galaxy-mode" id="galaxy-3d-extruded">
+                        3D Extruded
+                    </label>
+                </div>
+                <div>
+                    <label>
+                        <input type="radio" name="galaxy-mode" id="galaxy-3d-cloud">
+                        3D Cloud
                     </label>
                 </div>
                 <div>
@@ -304,6 +311,8 @@
     <div id="loading-textures">Loading texture...</div>
 
     <div id="loading-mesh">Loading mesh...</div>
+
+    <div id="loading-cloud">Loading cloud...</div>
 
     <div id="update-date">
         Last update: <span id="last-update">Loading...</span>
@@ -424,11 +433,9 @@
         }
 
         //-------------------------------------------------------------------------------
-        // Fixed createGalaxyPlane function with proper preview/loading handling
         function createGalaxyPlane(showAnnotations = false) {
             const loadingMsg = document.getElementById('loading-textures');
-            if (loadingMsg) loadingMsg.style.display = 'block'; // Always show loading
-            
+
             const previewPath = showAnnotations
                 ? './images/MW_transparent_annotated_preview.png'
                 : './images/MW_transparent_preview.png';
@@ -450,9 +457,9 @@
                     galaxyPlane.material.needsUpdate = true;
                     galaxyPlane.material.transparent = true;
                     galaxyPlane.material.opacity = 1.0;
+                    galaxyPlane.material.depthTest = true;
                     galaxyPlane.material.depthWrite = false; // Crucial for transparency
-                    galaxyPlane.renderOrder = 1; // Render before points (points have renderOrder 2 implicitly by default or explicitly)
-                                                 // Ensure galaxyPlane renders before points, so points are on top.
+                    galaxyPlane.renderOrder = 1; // Render after points (points have renderOrder 0 implicitly by default or explicitly)
 
                 } else {
                     // Create new galaxy plane
@@ -476,14 +483,10 @@
                 // Now load the full-resolution texture
                 textureLoader.load(highResPath, (hiResTexture) => {
                     updateGalaxyPlaneTexture(hiResTexture);
-                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading after high-res loads
-                }, undefined, (error) => {
-                    console.error('Error loading high-res texture:', error);
-                    if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading on error
+                    hideAllLoadingMessages();
                 });
             }, undefined, (error) => {
                 console.error('Error loading preview texture:', error);
-                if (loadingMsg) loadingMsg.style.display = 'none'; // Hide loading on error
             });
         }
 
@@ -491,9 +494,6 @@
         function createGalaxyHeightMesh() {
             const textureLoader = new THREE.TextureLoader();
             const loadingMeshMsg = document.getElementById('loading-mesh');
-
-            // Show loading message
-            if (loadingMeshMsg) loadingMeshMsg.style.display = 'block';
 
             // Load BOTH images
             const colorTexture = textureLoader.load('./images/MW_transparent_small.png');
@@ -546,11 +546,10 @@
                 scene.add(galaxyHeightMesh);
 
                     // Hide loading message after mesh is created
-                    if (loadingMeshMsg) loadingMeshMsg.style.display = 'none';
+                    hideAllLoadingMessages();
                 }, undefined, (error) => {
                     // Hide loading message on error
                     console.error('Error loading height texture:', error);
-                    if (loadingMeshMsg) loadingMeshMsg.style.display = 'none';
             });
         }
 
@@ -558,6 +557,9 @@
         function handleGalaxyModeChange(event) {
             const selectedMode = event.target.id;
             
+            // Always reset messages first
+            hideAllLoadingMessages();
+
             // Remove all existing galaxy objects
             if (galaxyPlane) {
                 scene.remove(galaxyPlane);
@@ -569,18 +571,35 @@
                 galaxyHeightMesh = null;
                 galaxyHeightMeshMirror = null;
             }
-            
+            // ADD THIS: Clean up the volumetric points
+            if (galaxyVolumetric) {
+                scene.remove(galaxyVolumetric);
+                galaxyVolumetric = null;
+            }
+
             // Create appropriate galaxy based on selection
-            switch(selectedMode) {
+            switch (selectedMode) {
                 case 'galaxy-2d':
-                    createGalaxyPlane(false); // Pass false for no annotations
+                    showLoading('loading-textures');
+                    createGalaxyPlane(false);
                     break;
+
                 case 'galaxy-2d-annotated':
-                    createGalaxyPlane(true); // Pass true for annotations
+                    showLoading('loading-textures');
+                    createGalaxyPlane(true);
                     break;
-                case 'galaxy-3d':
+
+                case 'galaxy-3d-extruded':
+                    showLoading('loading-mesh');
                     createGalaxyHeightMesh();
                     break;
+
+                case 'galaxy-3d-cloud':
+                    showLoading('loading-cloud');
+                    createGalaxyPlane(false);   // background only
+                    createVolumetricGalaxy();   // cloud is the real load
+                    break;
+
                 case 'galaxy-none':
                     // Do nothing - no galaxy displayed
                     break;
@@ -588,9 +607,99 @@
         }
 
         //-------------------------------------------------------------------------------
+        function createVolumetricGalaxy() {
+            const loadingCloudMsg = document.getElementById('loading-cloud');
+
+            const textureLoader = new THREE.TextureLoader();
+            
+            // Load the COLOR image (this gives us both shape and the actual colors)
+            textureLoader.load('./images/MW_transparent_small.png', (texture) => {
+                const particleCount = 1000000; 
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = texture.image;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+
+                let i = 0;
+                let attempts = 0;
+                // Limit attempts to prevent infinite loops on dark images
+                while (i < particleCount && attempts < particleCount * 10) {
+                    attempts++;
+                    let rx = Math.random() * img.width;
+                    let ry = Math.random() * img.height;
+                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
+                    
+                    // Get brightness (0 to 1)
+                    let r = imgData[pixelIndex] / 255;
+                    let g = imgData[pixelIndex + 1] / 255;
+                    let b = imgData[pixelIndex + 2] / 255;
+                    let brightness = (r + g + b) / 3;
+
+                    // 1. INCREASE CONTRAST: Square the brightness
+                    // Areas with 0.5 brightness now have 0.25 chance. 
+                    // Areas with 0.1 brightness now have 0.01 chance.
+                    if (Math.random() < Math.pow(brightness, 4.5)) {
+                        let posX = (rx / img.width - 0.5) * config.galaxySize;
+                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
+
+                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
+                        let thickness = Math.max(500, 3500 * Math.exp(-distFromCenter / (config.galaxySize / 5)));
+                        
+                        let u1 = Math.random(), u2 = Math.random();
+                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
+
+                        positions[i * 3] = posX;
+                        positions[i * 3 + 1] = posY;
+                        positions[i * 3 + 2] = posZ;
+
+                        // 2. ASSIGN REAL COLORS: Sampling from the original image
+                        // Scale the colors down so they are "dimmer" individually
+                        const colorDampener = 1.0; // Lower this as you increase particleCount
+                        colors[i * 3] = r * colorDampener;
+                        colors[i * 3 + 1] = g * colorDampener;
+                        colors[i * 3 + 2] = b * colorDampener;
+                        i++;
+                    }
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                // 3. FUZZY TEXTURE: Use a blurred circle instead of a square
+                const sprite = createCircularTexture(); // Reusing your existing helper
+
+                const material = new THREE.PointsMaterial({
+                    size: 400,               // Large size makes them "fuse" into a cloud
+                    map: sprite,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.025,           // Lower opacity creates a more gaseous feel
+                    blending: THREE.AdditiveBlending, 
+                    //blending: THREE.NormalBlending,
+                    depthWrite: false,       // Essential so stars don't block each other
+                    depthTest: true          // Let the image plane show through the stars
+                });
+
+                galaxyVolumetric = new THREE.Points(geometry, material);
+                galaxyVolumetric.renderOrder = 2;
+                scene.add(galaxyVolumetric);
+
+                hideAllLoadingMessages();
+            });
+        }
+
+        //-------------------------------------------------------------------------------
         let galaxyPlane = null;
         let galaxyHeightMesh = null;
         let galaxyHeightMeshMirror = null;
+        let galaxyVolumetric = null;
 
         function toggleGalaxyMode(event) {
             const is3D = event.target.checked;
@@ -796,6 +905,19 @@
 
             sprite.renderOrder = 3; // Renders after the meshes
             scene.add(sprite);
+        }
+
+        //-------------------------------------------------------------------------------
+        function hideAllLoadingMessages() {
+            document.getElementById('loading-textures').style.display = 'none';
+            document.getElementById('loading-mesh').style.display = 'none';
+            document.getElementById('loading-cloud').style.display = 'none';
+        }
+
+        //------------------------------------------------------------------------------- 
+        function showLoading(id) {
+            hideAllLoadingMessages();
+            document.getElementById(id).style.display = 'block';
         }
 
         //-------------------------------------------------------------------------------
