@@ -433,296 +433,37 @@
         }
 
         //-------------------------------------------------------------------------------
-        function createGalaxyPlane(showAnnotations = false) {
-            const loadingMsg = document.getElementById('loading-textures');
+        function addGalacticNorthMarker() {
+            // Create canvas and draw the "N"
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 512;
+            canvas.height = 512;
 
-            const previewPath = showAnnotations
-                ? './images/MW_transparent_annotated_preview.png'
-                : './images/MW_transparent_preview.png';
+            // Draw the letter "N"
+            context.fillStyle = 'white';
+            context.font = 'bold 100px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText('N', canvas.width / 2, canvas.height / 2);
 
-            const highResPath = showAnnotations
-                ? './images/MW_transparent_annotated_small.png'
-                : './images/MW_transparent_small.png';
+            // Create a texture from the canvas
+            const texture = new THREE.CanvasTexture(canvas);
 
-            const textureLoader = new THREE.TextureLoader();
-
-            // Function to create or update galaxy plane with texture
-            function updateGalaxyPlaneTexture(texture) {
-                if (galaxyPlane) {
-                    // Dispose old texture to prevent memory leaks
-                    if (galaxyPlane.material.map) {
-                        galaxyPlane.material.map.dispose();
-                    }
-                    galaxyPlane.material.map = texture;
-                    galaxyPlane.material.needsUpdate = true;
-                    galaxyPlane.material.transparent = true;
-                    galaxyPlane.material.opacity = 1.0;
-                    galaxyPlane.material.depthTest = true;
-                    galaxyPlane.material.depthWrite = false; // Crucial for transparency
-                    galaxyPlane.renderOrder = 1; // Render after points (points have renderOrder 0 implicitly by default or explicitly)
-
-                } else {
-                    // Create new galaxy plane
-                    const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
-                    const material = new THREE.MeshBasicMaterial({
-                        map: texture,
-                        transparent: true,
-                        opacity: 1.0,
-                        side: THREE.DoubleSide
-                    });
-                    galaxyPlane = new THREE.Mesh(geometry, material);
-                    galaxyPlane.rotation.x = -Math.PI / 2;
-                    scene.add(galaxyPlane);
-                }
-            }
-
-            // Load low-res preview first (always show preview and loading)
-            textureLoader.load(previewPath, (previewTexture) => {
-                updateGalaxyPlaneTexture(previewTexture);
-                
-                // Now load the full-resolution texture
-                textureLoader.load(highResPath, (hiResTexture) => {
-                    updateGalaxyPlaneTexture(hiResTexture);
-                    hideAllLoadingMessages();
-                });
-            }, undefined, (error) => {
-                console.error('Error loading preview texture:', error);
+            const spriteMaterial = new THREE.SpriteMaterial({
+                map: texture,
+                transparent: true,
+                depthWrite: false, // Optional: prevents it from cutting background
+                blending: THREE.NormalBlending // Or AdditiveBlending if preferred
             });
-        }
 
-        //-------------------------------------------------------------------------------
-        function createGalaxyHeightMesh() {
-            const textureLoader = new THREE.TextureLoader();
-            const loadingMeshMsg = document.getElementById('loading-mesh');
+            const sprite = new THREE.Sprite(spriteMaterial);
 
-            // Load BOTH images
-            const colorTexture = textureLoader.load('./images/MW_transparent_small.png');
-            const heightTexture = textureLoader.load('./images/MW_transparent_small_BW4b.png', (texture) => {
-                const widthSegments = 512;
-                const heightSegments = 512;
+            sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
+            sprite.position.set(0, 30000, 0); // Position at Galactic North
 
-                const geometry = new THREE.PlaneGeometry(
-                    config.galaxySize, config.galaxySize,
-                    widthSegments, heightSegments
-                );
-
-                // Extract pixel data from height map
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = texture.image;
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-
-                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
-                const positions = geometry.attributes.position;
-
-                for (let i = 0; i < positions.count; i++) {
-                    const ix = i % (widthSegments + 1);
-                    const iy = Math.floor(i / (widthSegments + 1));
-
-                    const pixelX = Math.floor(ix / widthSegments * (img.width - 1));
-                    const pixelY = Math.floor(iy / heightSegments * (img.height - 1));
-                    const index = (pixelY * img.width + pixelX) * 4;
-
-                    const brightness = imgData[index] / 255; // Red channel
-                    const height = (brightness - 0.5) * 8000; // Centered extrusion up/down
-
-                    positions.setZ(i, height);
-                }
-                positions.needsUpdate = true;
-
-                const material = new THREE.MeshBasicMaterial({
-                    map: colorTexture, // COLOR image
-                    transparent: true,
-                    opacity: 1,
-                    side: THREE.DoubleSide,
-                    depthWrite: false, // Prevents the galaxy plane from affecting depth buffer
-                });
-
-                galaxyHeightMesh = new THREE.Mesh(geometry, material);
-                galaxyHeightMesh.rotation.x = -Math.PI / 2;
-                galaxyHeightMesh.renderOrder = 2;
-                scene.add(galaxyHeightMesh);
-
-                    // Hide loading message after mesh is created
-                    hideAllLoadingMessages();
-                }, undefined, (error) => {
-                    // Hide loading message on error
-                    console.error('Error loading height texture:', error);
-            });
-        }
-
-        //-------------------------------------------------------------------------------
-        function handleGalaxyModeChange(event) {
-            const selectedMode = event.target.id;
-            
-            // Always reset messages first
-            hideAllLoadingMessages();
-
-            // Remove all existing galaxy objects
-            if (galaxyPlane) {
-                scene.remove(galaxyPlane);
-                galaxyPlane = null;
-            }
-            if (galaxyHeightMesh) {
-                scene.remove(galaxyHeightMesh);
-                scene.remove(galaxyHeightMeshMirror);
-                galaxyHeightMesh = null;
-                galaxyHeightMeshMirror = null;
-            }
-            // ADD THIS: Clean up the volumetric points
-            if (galaxyVolumetric) {
-                scene.remove(galaxyVolumetric);
-                galaxyVolumetric = null;
-            }
-
-            // Create appropriate galaxy based on selection
-            switch (selectedMode) {
-                case 'galaxy-2d':
-                    showLoading('loading-textures');
-                    createGalaxyPlane(false);
-                    break;
-
-                case 'galaxy-2d-annotated':
-                    showLoading('loading-textures');
-                    createGalaxyPlane(true);
-                    break;
-
-                case 'galaxy-3d-extruded':
-                    showLoading('loading-mesh');
-                    createGalaxyHeightMesh();
-                    break;
-
-                case 'galaxy-3d-cloud':
-                    showLoading('loading-cloud');
-                    createGalaxyPlane(false);   // background only
-                    createVolumetricGalaxy();   // cloud is the real load
-                    break;
-
-                case 'galaxy-none':
-                    // Do nothing - no galaxy displayed
-                    break;
-            }
-        }
-
-        //-------------------------------------------------------------------------------
-        function createVolumetricGalaxy() {
-            const loadingCloudMsg = document.getElementById('loading-cloud');
-
-            const textureLoader = new THREE.TextureLoader();
-            
-            // Load the COLOR image (this gives us both shape and the actual colors)
-            textureLoader.load('./images/MW_transparent_small.png', (texture) => {
-                const particleCount = 1000000; 
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                const colors = new Float32Array(particleCount * 3);
-
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = texture.image;
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
-
-                let i = 0;
-                let attempts = 0;
-                // Limit attempts to prevent infinite loops on dark images
-                while (i < particleCount && attempts < particleCount * 10) {
-                    attempts++;
-                    let rx = Math.random() * img.width;
-                    let ry = Math.random() * img.height;
-                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
-                    
-                    // Get brightness (0 to 1)
-                    let r = imgData[pixelIndex] / 255;
-                    let g = imgData[pixelIndex + 1] / 255;
-                    let b = imgData[pixelIndex + 2] / 255;
-                    let brightness = (r + g + b) / 3;
-
-                    // 1. INCREASE CONTRAST: Square the brightness
-                    // Areas with 0.5 brightness now have 0.25 chance. 
-                    // Areas with 0.1 brightness now have 0.01 chance.
-                    if (Math.random() < Math.pow(brightness, 4.5)) {
-                        let posX = (rx / img.width - 0.5) * config.galaxySize;
-                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
-
-                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
-                        let thickness = Math.max(500, 3500 * Math.exp(-distFromCenter / (config.galaxySize / 5)));
-                        
-                        let u1 = Math.random(), u2 = Math.random();
-                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
-
-                        positions[i * 3] = posX;
-                        positions[i * 3 + 1] = posY;
-                        positions[i * 3 + 2] = posZ;
-
-                        // 2. ASSIGN REAL COLORS: Sampling from the original image
-                        // Scale the colors down so they are "dimmer" individually
-                        const colorDampener = 1.0; // Lower this as you increase particleCount
-                        colors[i * 3] = r * colorDampener;
-                        colors[i * 3 + 1] = g * colorDampener;
-                        colors[i * 3 + 2] = b * colorDampener;
-                        i++;
-                    }
-                }
-
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-                // 3. FUZZY TEXTURE: Use a blurred circle instead of a square
-                const sprite = createCircularTexture(); // Reusing your existing helper
-
-                const material = new THREE.PointsMaterial({
-                    size: 400,               // Large size makes them "fuse" into a cloud
-                    map: sprite,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.025,           // Lower opacity creates a more gaseous feel
-                    blending: THREE.AdditiveBlending, 
-                    //blending: THREE.NormalBlending,
-                    depthWrite: false,       // Essential so stars don't block each other
-                    depthTest: true          // Let the image plane show through the stars
-                });
-
-                galaxyVolumetric = new THREE.Points(geometry, material);
-                galaxyVolumetric.renderOrder = 2;
-                scene.add(galaxyVolumetric);
-
-                hideAllLoadingMessages();
-            });
-        }
-
-        //-------------------------------------------------------------------------------
-        let galaxyPlane = null;
-        let galaxyHeightMesh = null;
-        let galaxyHeightMeshMirror = null;
-        let galaxyVolumetric = null;
-
-        function toggleGalaxyMode(event) {
-            const is3D = event.target.checked;
-
-            if (is3D) {
-                // Remove 2D plane if exists
-                if (galaxyPlane) {
-                    scene.remove(galaxyPlane);
-                    galaxyPlane = null;
-                }
-                // Add 3D meshes
-                createGalaxyHeightMesh();
-            } else {
-                // Remove 3D meshes if exist
-                if (galaxyHeightMesh) {
-                    scene.remove(galaxyHeightMesh);
-                    scene.remove(galaxyHeightMeshMirror);
-                    galaxyHeightMesh = null;
-                    galaxyHeightMeshMirror = null;
-                }
-                // Add 2D plane back
-                createGalaxyPlane();
-            }
+            sprite.renderOrder = 3; // Renders after the meshes
+            scene.add(sprite);
         }
 
         //-------------------------------------------------------------------------------
@@ -828,6 +569,389 @@
         }
 
         //-------------------------------------------------------------------------------
+        function createGalaxyPlane(showAnnotations = false) {
+            const loadingMsg = document.getElementById('loading-textures');
+
+            const previewPath = showAnnotations
+                ? './images/MW_transparent_annotated_preview.png'
+                : './images/MW_transparent_preview.png';
+
+            const highResPath = showAnnotations
+                ? './images/MW_transparent_annotated_small.png'
+                : './images/MW_transparent_small.png';
+
+            const textureLoader = new THREE.TextureLoader();
+
+            // Function to create or update galaxy plane with texture
+            function updateGalaxyPlaneTexture(texture) {
+                if (galaxyPlane) {
+                    // Dispose old texture to prevent memory leaks
+                    if (galaxyPlane.material.map) {
+                        galaxyPlane.material.map.dispose();
+                    }
+                    galaxyPlane.material.map = texture;
+                    galaxyPlane.material.needsUpdate = true;
+                    galaxyPlane.material.transparent = true;
+                    galaxyPlane.material.opacity = 1.0;
+                    galaxyPlane.material.depthTest = true;
+                    galaxyPlane.material.depthWrite = false; // Crucial for transparency
+                    galaxyPlane.renderOrder = 1; // Render after points (points have renderOrder 0 implicitly by default or explicitly)
+
+                } else {
+                    // Create new galaxy plane
+                    const geometry = new THREE.PlaneGeometry(config.galaxySize, config.galaxySize);
+                    const material = new THREE.MeshBasicMaterial({
+                        map: texture,
+                        transparent: true,
+                        opacity: 1.0,
+                        side: THREE.DoubleSide
+                    });
+                    galaxyPlane = new THREE.Mesh(geometry, material);
+                    galaxyPlane.rotation.x = -Math.PI / 2;
+                    scene.add(galaxyPlane);
+                }
+            }
+
+            // Load low-res preview first (always show preview and loading)
+            textureLoader.load(previewPath, (previewTexture) => {
+                updateGalaxyPlaneTexture(previewTexture);
+                
+                // Now load the full-resolution texture
+                textureLoader.load(highResPath, (hiResTexture) => {
+                    updateGalaxyPlaneTexture(hiResTexture);
+                    hideAllLoadingMessages();
+                });
+            }, undefined, (error) => {
+                console.error('Error loading preview texture:', error);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        function createGalaxyHeightMesh() {
+            const textureLoader = new THREE.TextureLoader();
+            const loadingMeshMsg = document.getElementById('loading-mesh');
+
+            // Load BOTH images
+            const colorTexture = textureLoader.load('./images/MW_transparent_small.png');
+            const heightTexture = textureLoader.load('./images/MW_transparent_small_BW.png', (texture) => {
+                const widthSegments = 512;
+                const heightSegments = 512;
+
+                const geometry = new THREE.PlaneGeometry(
+                    config.galaxySize, config.galaxySize,
+                    widthSegments, heightSegments
+                );
+
+                // Extract pixel data from height map
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = texture.image;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+
+                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+                const positions = geometry.attributes.position;
+
+                for (let i = 0; i < positions.count; i++) {
+                    const ix = i % (widthSegments + 1);
+                    const iy = Math.floor(i / (widthSegments + 1));
+
+                    const pixelX = Math.floor(ix / widthSegments * (img.width - 1));
+                    const pixelY = Math.floor(iy / heightSegments * (img.height - 1));
+                    const index = (pixelY * img.width + pixelX) * 4;
+
+                    const brightness = imgData[index] / 255; // Red channel
+                    const height = (brightness - 0.5) * 8000; // Centered extrusion up/down
+
+                    positions.setZ(i, height);
+                }
+                positions.needsUpdate = true;
+
+                const material = new THREE.MeshBasicMaterial({
+                    map: colorTexture, // COLOR image
+                    transparent: true,
+                    opacity: 1,
+                    side: THREE.DoubleSide,
+                    depthWrite: false, // Prevents the galaxy plane from affecting depth buffer
+                });
+
+                galaxyHeightMesh = new THREE.Mesh(geometry, material);
+                galaxyHeightMesh.rotation.x = -Math.PI / 2;
+                galaxyHeightMesh.renderOrder = 2;
+                scene.add(galaxyHeightMesh);
+
+                    // Hide loading message after mesh is created
+                    hideAllLoadingMessages();
+                }, undefined, (error) => {
+                    // Hide loading message on error
+                    console.error('Error loading height texture:', error);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        function createCloudGalaxy() {
+            const loadingCloudMsg = document.getElementById('loading-cloud');
+
+            const textureLoader = new THREE.TextureLoader();
+            
+            // Load the COLOR image (this gives us both shape and the actual colors)
+            textureLoader.load('./images/MW_transparent_small.png', (texture) => {
+                const particleCount = 1000000; 
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = texture.image;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+
+                let i = 0;
+                let attempts = 0;
+                // Limit attempts to prevent infinite loops on dark images
+                while (i < particleCount && attempts < particleCount * 10) {
+                    attempts++;
+                    let rx = Math.random() * img.width;
+                    let ry = Math.random() * img.height;
+                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
+                    
+                    // Get brightness (0 to 1)
+                    let r = imgData[pixelIndex] / 255;
+                    let g = imgData[pixelIndex + 1] / 255;
+                    let b = imgData[pixelIndex + 2] / 255;
+                    let brightness = (r + g + b) / 3;
+
+                    // 1. INCREASE CONTRAST: Square the brightness
+                    // Areas with 0.5 brightness now have 0.25 chance. 
+                    // Areas with 0.1 brightness now have 0.01 chance.
+                    if (Math.random() < Math.pow(brightness, 4.5)) {
+                        let posX = (rx / img.width - 0.5) * config.galaxySize;
+                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
+
+                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
+                        let thickness = Math.max(500, 3500 * Math.exp(-distFromCenter / (config.galaxySize / 5)));
+                        
+                        let u1 = Math.random(), u2 = Math.random();
+                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
+
+                        positions[i * 3] = posX;
+                        positions[i * 3 + 1] = posY;
+                        positions[i * 3 + 2] = posZ;
+
+                        // 2. ASSIGN REAL COLORS: Sampling from the original image
+                        // Scale the colors down so they are "dimmer" individually
+                        const colorDampener = 1.0; // Lower this as you increase particleCount
+                        colors[i * 3] = r * colorDampener;
+                        colors[i * 3 + 1] = g * colorDampener;
+                        colors[i * 3 + 2] = b * colorDampener;
+                        i++;
+                    }
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                // 3. FUZZY TEXTURE: Use a blurred circle instead of a square
+                const textureLoader = new THREE.TextureLoader();
+                const sprite = textureLoader.load('./images/fuzzy_circle.png', 
+                    (texture) => console.log('Sprite loaded:', texture));
+
+                const material = new THREE.PointsMaterial({
+                    size: 600,               // Large size makes them "fuse" into a cloud
+                    map: sprite,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.1,           // Lower opacity creates a more gaseous feel
+                    blending: THREE.AdditiveBlending, 
+                    //blending: THREE.NormalBlending,
+                    depthWrite: false,       // Essential so stars don't block each other
+                    depthTest: true          // Let the image plane show through the stars
+                });
+
+                galaxyCloud = new THREE.Points(geometry, material);
+                galaxyCloud.renderOrder = 3;
+                scene.add(galaxyCloud);
+
+                hideAllLoadingMessages();
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        function createGalacticNebula() {
+            console.log("Starting Nebula Load...");
+            const textureLoader = new THREE.TextureLoader();
+
+            textureLoader.load('./images/MW_nebula_mask_small.png', (maskTexture) => {
+                console.log("Nebula Mask Loaded successfully.");
+                const particleCount = 300000; // Lowered slightly for better performance
+                const geometry = new THREE.BufferGeometry();
+                const positions = new Float32Array(particleCount * 3);
+                const colors = new Float32Array(particleCount * 3);
+
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                const img = maskTexture.image;
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+
+                let i = 0;
+                let attempts = 0;
+                while (i < particleCount && attempts < particleCount * 5) {
+                    attempts++;
+                    let rx = Math.random() * img.width;
+                    let ry = Math.random() * img.height;
+                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
+                    
+                    let density = imgData[pixelIndex] / 255;
+
+                    if (Math.random() < Math.pow(density, 2)) {
+                        let posX = (rx / img.width - 0.5) * config.galaxySize;
+                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
+
+                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
+                        let thickness = 1200 * Math.exp(-distFromCenter / (config.galaxySize / 4));
+                        
+                        let u1 = Math.random(), u2 = Math.random();
+                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
+
+                        positions[i * 3] = posX;
+                        positions[i * 3 + 1] = posY;
+                        positions[i * 3 + 2] = posZ;
+
+                        // Dark dust colors
+                        colors[i * 3] = 0.04;     
+                        colors[i * 3 + 1] = 0.02;  
+                        colors[i * 3 + 2] = 0.01;  
+                        i++;
+                    }
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions.slice(0, i * 3), 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors.slice(0, i * 3), 3));
+
+                // Use the existing fuzzy circle texture
+                const sprite = textureLoader.load('./images/fuzzy_circle.png');
+
+                const material = new THREE.PointsMaterial({
+                    size: 1500, 
+                    map: sprite,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.05,
+                    blending: THREE.NormalBlending, 
+                    depthWrite: false,
+                    depthTest: true,
+                    //alphaTest: 0.1,
+                });
+
+                galaxyNebula = new THREE.Points(geometry, material);
+                galaxyNebula.renderOrder = 2; // Render AFTER stars (3)
+                scene.add(galaxyNebula);
+                console.log("Nebula added to scene.");
+
+            }, undefined, (err) => {
+                console.error("Error loading nebula mask image. Check path!", err);
+            });
+        }
+
+        //-------------------------------------------------------------------------------
+        let galaxyPlane = null;
+        let galaxyHeightMesh = null;
+        let galaxyHeightMeshMirror = null;
+        let galaxyCloud = null;
+        let galaxyNebula = null;
+
+        //-------------------------------------------------------------------------------
+        function toggleGalaxyMode(event) {
+            const is3D = event.target.checked;
+
+            if (is3D) {
+                // Remove 2D plane if exists
+                if (galaxyPlane) {
+                    scene.remove(galaxyPlane);
+                    galaxyPlane = null;
+                }
+                // Add 3D meshes
+                createGalaxyHeightMesh();
+            } else {
+                // Remove 3D meshes if exist
+                if (galaxyHeightMesh) {
+                    scene.remove(galaxyHeightMesh);
+                    scene.remove(galaxyHeightMeshMirror);
+                    galaxyHeightMesh = null;
+                    galaxyHeightMeshMirror = null;
+                }
+                // Add 2D plane back
+                createGalaxyPlane();
+            }
+        }
+
+        //-------------------------------------------------------------------------------
+        function handleGalaxyModeChange(event) {
+            const selectedMode = event.target.id;
+            
+            // Always reset messages first
+            hideAllLoadingMessages();
+
+            // Remove all existing galaxy objects
+            if (galaxyPlane) {
+                scene.remove(galaxyPlane);
+                galaxyPlane = null;
+            }
+            if (galaxyHeightMesh) {
+                scene.remove(galaxyHeightMesh);
+                scene.remove(galaxyHeightMeshMirror);
+                galaxyHeightMesh = null;
+                galaxyHeightMeshMirror = null;
+            }
+            // ADD THIS: Clean up the volumetric points
+            if (galaxyCloud) {
+                scene.remove(galaxyCloud);
+                galaxyCloud = null;
+            }
+            // CLEANUP: Remove the nebula if it exists
+            if (galaxyNebula) {
+                scene.remove(galaxyNebula);
+                galaxyNebula = null;
+            }
+
+            // Create appropriate galaxy based on selection
+            switch (selectedMode) {
+                case 'galaxy-2d':
+                    showLoading('loading-textures');
+                    createGalaxyPlane(false);
+                    break;
+
+                case 'galaxy-2d-annotated':
+                    showLoading('loading-textures');
+                    createGalaxyPlane(true);
+                    break;
+
+                case 'galaxy-3d-extruded':
+                    showLoading('loading-mesh');
+                    createGalaxyHeightMesh();
+                    break;
+
+                case 'galaxy-3d-cloud':
+                    showLoading('loading-cloud');
+                    createGalaxyPlane(false);   // background only
+                    createCloudGalaxy();   // cloud is the real load
+                    createGalacticNebula();     // ADD THIS: create dust lanes
+                    break;
+
+                case 'galaxy-none':
+                    // Do nothing - no galaxy displayed
+                    break;
+            }
+        }
+
+        //-------------------------------------------------------------------------------
         function createControls() {
             const legendList = document.getElementById('legend-list');
 
@@ -871,40 +995,6 @@
             methodCheckboxes.forEach((checkbox) => {
                 checkbox.disabled = allChecked;
             });
-        }
-
-        //-------------------------------------------------------------------------------
-        function addGalacticNorthMarker() {
-            // Create canvas and draw the "N"
-            const canvas = document.createElement('canvas');
-            const context = canvas.getContext('2d');
-            canvas.width = 512;
-            canvas.height = 512;
-
-            // Draw the letter "N"
-            context.fillStyle = 'white';
-            context.font = 'bold 100px Arial';
-            context.textAlign = 'center';
-            context.textBaseline = 'middle';
-            context.fillText('N', canvas.width / 2, canvas.height / 2);
-
-            // Create a texture from the canvas
-            const texture = new THREE.CanvasTexture(canvas);
-
-            const spriteMaterial = new THREE.SpriteMaterial({
-                map: texture,
-                transparent: true,
-                depthWrite: false, // Optional: prevents it from cutting background
-                blending: THREE.NormalBlending // Or AdditiveBlending if preferred
-            });
-
-            const sprite = new THREE.Sprite(spriteMaterial);
-
-            sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
-            sprite.position.set(0, 30000, 0); // Position at Galactic North
-
-            sprite.renderOrder = 3; // Renders after the meshes
-            scene.add(sprite);
         }
 
         //-------------------------------------------------------------------------------
