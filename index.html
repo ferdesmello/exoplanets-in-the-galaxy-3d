@@ -327,6 +327,18 @@
 
     <script>
 
+        // Declare these at the top of the script block
+        let scene, camera, renderer, controls;
+        let galaxyPlane = null;
+        let galaxyHeightMesh = null;
+        let galaxyHeightMeshMirror = null;
+        let galaxyCloud = null; 
+        let galaxyNebula = null;
+
+        init();
+        animate();
+
+        //-------------------------------------------------------------------------------
         // Image cache for faster switching
         const imageCache = {};
         
@@ -350,8 +362,6 @@
 
         // Call enhanced preloading
         preloadImagesWithCache();
-
-        let scene, camera, renderer, controls;
 
         // Configuration
         const config = {
@@ -384,9 +394,6 @@
 
         // Make sure textureLoader is accessible globally or instantiated when needed.
         const textureLoader = new THREE.TextureLoader();
-
-        init();
-        animate();
 
         //-------------------------------------------------------------------------------
         async function init() {
@@ -462,7 +469,7 @@
             sprite.scale.set(6000, 6000, 1); // Adjust size of the "N"
             sprite.position.set(0, 30000, 0); // Position at Galactic North
 
-            sprite.renderOrder = 3; // Renders after the meshes
+            sprite.renderOrder = 0; // Renders after the meshes
             scene.add(sprite);
         }
 
@@ -505,7 +512,7 @@
                     });
 
                     const pointCloud = new THREE.Points(geometry, material);
-                    pointCloud.renderOrder = 0; // Ensure points are rendered before the galaxy plane
+                    pointCloud.renderOrder = 1; // Ensure points are rendered before the galaxy plane
                     scene.add(pointCloud);
 
                     // Store for toggling
@@ -552,15 +559,15 @@
 
                     const circularTexture = createCircularTexture();
 
-                    const material = new THREE.PointsMaterial({
+                    const exoplanetMaterial = new THREE.PointsMaterial({
                         color: methodColors[method],
-                        size: 100,
+                        size: 150,
                         alphaMap: circularTexture,
                         transparent: true,
                         alphaTest: 0.5,
                     });
 
-                    const pointCloud = new THREE.Points(geometry, material);
+                    const pointCloud = new THREE.Points(geometry, exoplanetMaterial);
                     scene.add(pointCloud);
 
                     methodPoints[method] = pointCloud;
@@ -593,9 +600,9 @@
                     galaxyPlane.material.needsUpdate = true;
                     galaxyPlane.material.transparent = true;
                     galaxyPlane.material.opacity = 1.0;
-                    galaxyPlane.material.depthTest = true;
-                    galaxyPlane.material.depthWrite = false; // Crucial for transparency
-                    galaxyPlane.renderOrder = 1; // Render after points (points have renderOrder 0 implicitly by default or explicitly)
+                    galaxyPlane.material.depthTest = false;
+                    galaxyPlane.material.depthWrite = true;
+                    galaxyPlane.renderOrder = 2; // Render after exoplanets
 
                 } else {
                     // Create new galaxy plane
@@ -604,6 +611,7 @@
                         map: texture,
                         transparent: true,
                         opacity: 1.0,
+                        depthWrite: true,
                         side: THREE.DoubleSide
                     });
                     galaxyPlane = new THREE.Mesh(geometry, material);
@@ -668,7 +676,7 @@
                 }
                 positions.needsUpdate = true;
 
-                const material = new THREE.MeshBasicMaterial({
+                const meshMaterial = new THREE.MeshBasicMaterial({
                     map: colorTexture, // COLOR image
                     transparent: true,
                     opacity: 1,
@@ -676,9 +684,9 @@
                     depthWrite: false, // Prevents the galaxy plane from affecting depth buffer
                 });
 
-                galaxyHeightMesh = new THREE.Mesh(geometry, material);
+                galaxyHeightMesh = new THREE.Mesh(geometry, meshMaterial);
                 galaxyHeightMesh.rotation.x = -Math.PI / 2;
-                galaxyHeightMesh.renderOrder = 2;
+                galaxyHeightMesh.renderOrder = 3;
                 scene.add(galaxyHeightMesh);
 
                     // Hide loading message after mesh is created
@@ -690,182 +698,182 @@
         }
 
         //-------------------------------------------------------------------------------
-        function createCloudGalaxy() {
+        async function createUnifiedCloudGalaxy() {
             const loadingCloudMsg = document.getElementById('loading-cloud');
-
             const textureLoader = new THREE.TextureLoader();
             
-            // Load the COLOR image (this gives us both shape and the actual colors)
-            textureLoader.load('./images/MW_transparent_small.png', (texture) => {
-                const particleCount = 1000000; 
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                const colors = new Float32Array(particleCount * 3);
+            // 1. LOAD TEXTURES
+            const cloudTexture = await textureLoader.loadAsync('./images/MW_transparent_small.png');
+            const nebulaTexture = await textureLoader.loadAsync('./images/MW_nebula_mask_small.png');
+            const sprite = textureLoader.load('./images/fuzzy_circle.png');
 
+            const starCount = 200000; 
+            const nebulaCount = 20000;
+            const totalCount = starCount + nebulaCount;
+
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(totalCount * 3);
+            const colors = new Float32Array(totalCount * 3);
+            const blendTypes = new Float32Array(totalCount);
+
+            function getImageData(img) {
                 const canvas = document.createElement('canvas');
                 const ctx = canvas.getContext('2d');
-                const img = texture.image;
                 canvas.width = img.width;
                 canvas.height = img.height;
                 ctx.drawImage(img, 0, 0);
-                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
+                return ctx.getImageData(0, 0, img.width, img.height).data;
+            }
 
-                let i = 0;
-                let attempts = 0;
-                // Limit attempts to prevent infinite loops on dark images
-                while (i < particleCount && attempts < particleCount * 10) {
-                    attempts++;
-                    let rx = Math.random() * img.width;
-                    let ry = Math.random() * img.height;
-                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
+            const cloudData = getImageData(cloudTexture.image);
+            const nebulaData = getImageData(nebulaTexture.image);
+
+            let idx = 0;
+
+            // --- GENERATE STARS ---
+            let s = 0;
+            while (s < starCount) {
+                let rx = Math.random() * cloudTexture.image.width;
+                let ry = Math.random() * cloudTexture.image.height;
+                let pixelIndex = (Math.floor(ry) * cloudTexture.image.width + Math.floor(rx)) * 4;
+                let brightness = (cloudData[pixelIndex] + cloudData[pixelIndex+1] + cloudData[pixelIndex+2]) / 765;
+
+                if (Math.random() < Math.pow(brightness, 4.5)) {
+                    let posX = (rx / cloudTexture.image.width - 0.5) * config.galaxySize;
+                    let posZ = (ry / cloudTexture.image.height - 0.5) * config.galaxySize;
                     
-                    // Get brightness (0 to 1)
-                    let r = imgData[pixelIndex] / 255;
-                    let g = imgData[pixelIndex + 1] / 255;
-                    let b = imgData[pixelIndex + 2] / 255;
-                    let brightness = (r + g + b) / 3;
-
-                    // 1. INCREASE CONTRAST: Square the brightness
-                    // Areas with 0.5 brightness now have 0.25 chance. 
-                    // Areas with 0.1 brightness now have 0.01 chance.
-                    if (Math.random() < Math.pow(brightness, 4.5)) {
-                        let posX = (rx / img.width - 0.5) * config.galaxySize;
-                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
-
-                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
-                        let thickness = Math.max(500, 3500 * Math.exp(-distFromCenter / (config.galaxySize / 5)));
-                        
-                        let u1 = Math.random(), u2 = Math.random();
-                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
-
-                        positions[i * 3] = posX;
-                        positions[i * 3 + 1] = posY;
-                        positions[i * 3 + 2] = posZ;
-
-                        // 2. ASSIGN REAL COLORS: Sampling from the original image
-                        // Scale the colors down so they are "dimmer" individually
-                        const colorDampener = 1.0; // Lower this as you increase particleCount
-                        colors[i * 3] = r * colorDampener;
-                        colors[i * 3 + 1] = g * colorDampener;
-                        colors[i * 3 + 2] = b * colorDampener;
-                        i++;
-                    }
-                }
-
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-
-                // 3. FUZZY TEXTURE: Use a blurred circle instead of a square
-                const textureLoader = new THREE.TextureLoader();
-                const sprite = textureLoader.load('./images/fuzzy_circle.png', 
-                    (texture) => console.log('Sprite loaded:', texture));
-
-                const material = new THREE.PointsMaterial({
-                    size: 600,               // Large size makes them "fuse" into a cloud
-                    map: sprite,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.1,           // Lower opacity creates a more gaseous feel
-                    blending: THREE.AdditiveBlending, 
-                    //blending: THREE.NormalBlending,
-                    depthWrite: false,       // Essential so stars don't block each other
-                    depthTest: true          // Let the image plane show through the stars
-                });
-
-                galaxyCloud = new THREE.Points(geometry, material);
-                galaxyCloud.renderOrder = 3;
-                scene.add(galaxyCloud);
-
-                hideAllLoadingMessages();
-            });
-        }
-
-        //-------------------------------------------------------------------------------
-        function createGalacticNebula() {
-            console.log("Starting Nebula Load...");
-            const textureLoader = new THREE.TextureLoader();
-
-            textureLoader.load('./images/MW_nebula_mask_small.png', (maskTexture) => {
-                console.log("Nebula Mask Loaded successfully.");
-                const particleCount = 300000; // Lowered slightly for better performance
-                const geometry = new THREE.BufferGeometry();
-                const positions = new Float32Array(particleCount * 3);
-                const colors = new Float32Array(particleCount * 3);
-
-                const canvas = document.createElement('canvas');
-                const ctx = canvas.getContext('2d');
-                const img = maskTexture.image;
-                canvas.width = img.width;
-                canvas.height = img.height;
-                ctx.drawImage(img, 0, 0);
-                const imgData = ctx.getImageData(0, 0, img.width, img.height).data;
-
-                let i = 0;
-                let attempts = 0;
-                while (i < particleCount && attempts < particleCount * 5) {
-                    attempts++;
-                    let rx = Math.random() * img.width;
-                    let ry = Math.random() * img.height;
-                    let pixelIndex = (Math.floor(ry) * img.width + Math.floor(rx)) * 4;
+                    let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
+                    let thickness = Math.max(200, 5000 * Math.exp(-distFromCenter / (config.galaxySize / 5)));
                     
-                    let density = imgData[pixelIndex] / 255;
+                    let u1 = Math.random(), u2 = Math.random();
+                    let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
 
-                    if (Math.random() < Math.pow(density, 2)) {
-                        let posX = (rx / img.width - 0.5) * config.galaxySize;
-                        let posZ = (ry / img.height - 0.5) * config.galaxySize;
+                    positions[idx * 3] = posX;
+                    positions[idx * 3 + 1] = posY;
+                    positions[idx * 3 + 2] = posZ;
 
-                        let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
-                        let thickness = 1200 * Math.exp(-distFromCenter / (config.galaxySize / 4));
-                        
-                        let u1 = Math.random(), u2 = Math.random();
-                        let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
-
-                        positions[i * 3] = posX;
-                        positions[i * 3 + 1] = posY;
-                        positions[i * 3 + 2] = posZ;
-
-                        // Dark dust colors
-                        colors[i * 3] = 0.04;     
-                        colors[i * 3 + 1] = 0.02;  
-                        colors[i * 3 + 2] = 0.01;  
-                        i++;
-                    }
+                    colors[idx * 3] = cloudData[pixelIndex] / 255;
+                    colors[idx * 3 + 1] = cloudData[pixelIndex + 1] / 255;
+                    colors[idx * 3 + 2] = cloudData[pixelIndex + 2] / 255;
+                    blendTypes[idx] = 0.0; 
+                    idx++; s++;
                 }
+            }
 
-                geometry.setAttribute('position', new THREE.BufferAttribute(positions.slice(0, i * 3), 3));
-                geometry.setAttribute('color', new THREE.BufferAttribute(colors.slice(0, i * 3), 3));
+            // --- GENERATE NEBULA ---
+            let n = 0;
+            while (n < nebulaCount) {
+                let rx = Math.random() * nebulaTexture.image.width;
+                let ry = Math.random() * nebulaTexture.image.height;
+                let pixelIndex = (Math.floor(ry) * nebulaTexture.image.width + Math.floor(rx)) * 4;
+                let density = nebulaData[pixelIndex] / 255;
 
-                // Use the existing fuzzy circle texture
-                const sprite = textureLoader.load('./images/fuzzy_circle.png');
+                if (Math.random() < Math.pow(density, 2)) {
+                    let posX = (rx / nebulaTexture.image.width - 0.5) * config.galaxySize;
+                    let posZ = (ry / nebulaTexture.image.height - 0.5) * config.galaxySize;
+                    
+                    let distFromCenter = Math.sqrt(posX*posX + posZ*posZ);
+                    let thickness = 500 * Math.exp(-distFromCenter / (config.galaxySize / 4));
+                    
+                    let u1 = Math.random(), u2 = Math.random();
+                    let posY = Math.sqrt(-2.0 * Math.log(u1)) * Math.cos(2.0 * Math.PI * u2) * (thickness / 2);
 
-                const material = new THREE.PointsMaterial({
-                    size: 1500, 
-                    map: sprite,
-                    vertexColors: true,
-                    transparent: true,
-                    opacity: 0.05,
-                    blending: THREE.NormalBlending, 
-                    depthWrite: false,
-                    depthTest: true,
-                    //alphaTest: 0.1,
-                });
+                    positions[idx * 3] = posX;
+                    positions[idx * 3 + 1] = posY;
+                    positions[idx * 3 + 2] = posZ;
 
-                galaxyNebula = new THREE.Points(geometry, material);
-                galaxyNebula.renderOrder = 2; // Render AFTER stars (3)
-                scene.add(galaxyNebula);
-                console.log("Nebula added to scene.");
+                    colors[idx * 3] = 0.10;      // Red channel
+                    colors[idx * 3 + 1] = 0.01;  // Green channel
+                    colors[idx * 3 + 2] = 0.005; // Blue channel
+                    blendTypes[idx] = 1.0; 
+                    idx++; n++;
+                }
+            }
 
-            }, undefined, (err) => {
-                console.error("Error loading nebula mask image. Check path!", err);
+            // Shuffle the indices so stars and dust are interleaved
+            const indices = Array.from({ length: totalCount }, (_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            const shuffledPos = new Float32Array(totalCount * 3);
+            const shuffledCol = new Float32Array(totalCount * 3);
+            const shuffledBlend = new Float32Array(totalCount);
+
+            for (let i = 0; i < totalCount; i++) {
+                const oldIdx = indices[i];
+                shuffledPos.set([positions[oldIdx*3], positions[oldIdx*3+1], positions[oldIdx*3+2]], i*3);
+                shuffledCol.set([colors[oldIdx*3], colors[oldIdx*3+1], colors[oldIdx*3+2]], i*3);
+                shuffledBlend[i] = blendTypes[oldIdx];
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(shuffledPos, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(shuffledCol, 3));
+            geometry.setAttribute('blendType', new THREE.BufferAttribute(shuffledBlend, 1));
+
+            const unifiedMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    pointTexture: { value: sprite },
+                    dustOpacity: { value: 0.05 }
+                },
+                vertexShader: `
+                    attribute float blendType;
+                    attribute vec3 color;
+                    varying vec3 vColor;
+                    varying float vBlend;
+                    void main() {
+                        vColor = color;
+                        vBlend = blendType;
+                        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
+                        float sizeScale = (vBlend > 0.5) ? 800.0 : 400.0; // dust : stars
+                        gl_PointSize = sizeScale * ( 1000.0 / length( mvPosition.xyz ) );
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D pointTexture;
+                    uniform float dustOpacity;
+                    varying vec3 vColor;
+                    varying float vBlend;
+
+                    void main() {
+                        vec4 tex = texture2D( pointTexture, gl_PointCoord );
+                        if (tex.a < 0.01) discard;
+
+                        if (vBlend < 0.5) {
+                            // STARS: Very high alpha for strong occlusion
+                            float starAlpha = tex.a * 0.03;
+                            float starBrightness = 2.0;
+                            vec3 premultColor = vColor * starBrightness * starAlpha;
+                            gl_FragColor = vec4(premultColor, starAlpha);
+                        } else {
+                            // DUST: Maximum occlusion
+                            float dustAlpha = tex.a * dustOpacity;
+                            float dustBrightness = 0.5;
+                            vec3 premultColor = vColor * dustBrightness * dustAlpha;
+                            gl_FragColor = vec4(premultColor, dustAlpha);
+                        }
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                depthTest: true,
+                blending: THREE.CustomBlending,
+                blendEquation: THREE.AddEquation,
+                blendSrc: THREE.OneFactor,
+                blendDst: THREE.OneMinusSrcAlphaFactor
             });
-        }
 
-        //-------------------------------------------------------------------------------
-        let galaxyPlane = null;
-        let galaxyHeightMesh = null;
-        let galaxyHeightMeshMirror = null;
-        let galaxyCloud = null;
-        let galaxyNebula = null;
+            galaxyCloud = new THREE.Points(geometry, unifiedMaterial);
+            galaxyCloud.userData.isVolumetric = true;
+            
+            galaxyCloud.renderOrder = 10; 
+            
+            scene.add(galaxyCloud);
+            
+            hideAllLoadingMessages();
+        }
 
         //-------------------------------------------------------------------------------
         function toggleGalaxyMode(event) {
@@ -940,9 +948,11 @@
 
                 case 'galaxy-3d-cloud':
                     showLoading('loading-cloud');
-                    createGalaxyPlane(false);   // background only
-                    createCloudGalaxy();   // cloud is the real load
-                    createGalacticNebula();     // ADD THIS: create dust lanes
+                    createGalaxyPlane(false); 
+                    // Use .then to ensure we know when it finishes
+                    createUnifiedCloudGalaxy()
+                        .then(() => console.log("Galaxy Cloud Rendered"))
+                        .catch(err => console.error("Cloud Error:", err));
                     break;
 
                 case 'galaxy-none':
@@ -1028,11 +1038,72 @@
         }
 
         //-------------------------------------------------------------------------------
+        // To sort particles from back to front, we need to calculate their depth relative to the camera each frame and reorder them accordingly.
+        function sortParticles(points) {
+            const geometry = points.geometry;
+            const positions = geometry.attributes.position.array;
+            const colors = geometry.attributes.color.array;
+            const blendTypes = geometry.attributes.blendType.array;
+            const count = geometry.attributes.position.count;
+
+            const depthArray = [];
+            const projScreenMatrix = new THREE.Matrix4();
+            projScreenMatrix.multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
+
+            for (let i = 0; i < count; i++) {
+                const x = positions[i * 3];
+                const y = positions[i * 3 + 1];
+                const z = positions[i * 3 + 2];
+                
+                // Calculate camera distance (Z-depth)
+                const dz = (x * projScreenMatrix.elements[2] + y * projScreenMatrix.elements[6] + z * projScreenMatrix.elements[10] + projScreenMatrix.elements[14]) /
+                        (x * projScreenMatrix.elements[3] + y * projScreenMatrix.elements[7] + z * projScreenMatrix.elements[11] + projScreenMatrix.elements[15]);
+                
+                depthArray.push({ index: i, depth: dz });
+            }
+
+            // Sort from back to front
+            depthArray.sort((a, b) => b.depth - a.depth);
+
+            const sortedPos = new Float32Array(positions.length);
+            const sortedCol = new Float32Array(colors.length);
+            const sortedBlend = new Float32Array(blendTypes.length);
+
+            for (let i = 0; i < count; i++) {
+                const oldIdx = depthArray[i].index;
+                sortedPos.set([positions[oldIdx*3], positions[oldIdx*3+1], positions[oldIdx*3+2]], i*3);
+                sortedCol.set([colors[oldIdx*3], colors[oldIdx*3+1], colors[oldIdx*3+2]], i*3);
+                sortedBlend[i] = blendTypes[oldIdx];
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(sortedPos, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(sortedCol, 3));
+            geometry.setAttribute('blendType', new THREE.BufferAttribute(sortedBlend, 1));
+        }
+
+        //-------------------------------------------------------------------------------
+        // Update your existing animate() function
         function animate() {
             requestAnimationFrame(animate);
-            controls.update();
-            renderer.render(scene, camera);
-        }
+
+            // Only update controls if they have been initialized
+            if (controls) {
+                controls.update();
+            }
+
+            // Only sort particles if galaxyCloud and geometry are fully ready
+            if (galaxyCloud && galaxyCloud.geometry && galaxyCloud.userData.isVolumetric) {
+                // Performance check: sort every 10 frames to avoid lag
+                if (renderer && renderer.info.render.frame % 10 === 0) {
+                    sortParticles(galaxyCloud);
+                }
+            }
+
+            // Only render if the core components are ready
+            if (renderer && scene && camera) {
+                renderer.render(scene, camera);
+            }
+        } 
 
         //-------------------------------------------------------------------------------
         // Handle window resize
