@@ -617,7 +617,7 @@
         }
 
         //-------------------------------------------------------------------------------
-        function createGalaxyPlane(showAnnotations = false) {
+        function createGalaxyPlane(showAnnotations = false, onDone = null) {
             const loadingMsg = document.getElementById('loading-textures');
 
             const previewPath = showAnnotations
@@ -668,7 +668,8 @@
                 // Now load the full-resolution texture
                 textureLoader.load(highResPath, (hiResTexture) => {
                     updateGalaxyPlaneTexture(hiResTexture);
-                    hideAllLoadingMessages();
+                    
+                    if (onDone) onDone();
                 });
             }, undefined, (error) => {
                 console.error('Error loading preview texture:', error);
@@ -676,7 +677,7 @@
         }
 
         //-------------------------------------------------------------------------------
-        function createGalaxyHeightMesh() {
+        function createGalaxyHeightMesh(onDone = null) {
             const textureLoader = new THREE.TextureLoader();
             const loadingMeshMsg = document.getElementById('loading-mesh');
 
@@ -730,8 +731,8 @@
                 galaxyHeightMesh.renderOrder = 3;
                 scene.add(galaxyHeightMesh);
 
-                    // Hide loading message after mesh is created
-                    hideAllLoadingMessages();
+                if (onDone) onDone();
+
                 }, undefined, (error) => {
                     // Hide loading message on error
                     console.error('Error loading height texture:', error);
@@ -1078,32 +1079,38 @@
                 case 'galaxy-2d':
                     if (starfield) starfield.visible = true;
                     showLoading('loading-textures');
-                    createGalaxyPlane(false);
+
+                    createGalaxyPlane(false, () => {
+                        hideAllLoadingMessages();
+                    });
                     break;
 
                 case 'galaxy-2d-annotated':
                     if (starfield) starfield.visible = true;
                     showLoading('loading-textures');
-                    createGalaxyPlane(true);
+
+                    createGalaxyPlane(true, () => {
+                        hideAllLoadingMessages();
+                    });
                     break;
 
                 case 'galaxy-3d-extruded':
                     if (starfield) starfield.visible = true;
                     showLoading('loading-mesh');
-                    createGalaxyHeightMesh();
+                    createGalaxyHeightMesh(() => {
+                        hideAllLoadingMessages();
+                    });
                     break;
 
                 case 'galaxy-3d-cloud':
                     if (starfield) starfield.visible = true;
                     showLoading('loading-cloud');
-                    createGalaxyPlane(false); 
-                    // Use .then to ensure we know when it finishes
+                    createGalaxyPlane(false);
                     createUnifiedCloudGalaxy()
                         .then(() => {
-                            console.log("Galaxy Cloud Rendered");
-                            hideAllLoadingMessages(); // ← Move here
+                            hideAllLoadingMessages();
                         })
-                        .catch(err => console.error("Cloud Error:", err));
+                        .catch(err => console.error(err));
                     galaxyHalo = createGalacticHalo();
                     break;
 
