@@ -295,7 +295,7 @@
                 <div>
                     <label>
                         <input type="radio" name="galaxy-mode" id="galaxy-3d-cloud">
-                        3D Cloud
+                        3D Cloud (heavy!)
                     </label>
                 </div>
                 <div>
@@ -334,6 +334,7 @@
         let galaxyHeightMeshMirror = null;
         let galaxyCloud = null; 
         let galaxyNebula = null;
+        let galaxyHalo = null;
 
         init();
         animate();
@@ -874,6 +875,103 @@
             
             hideAllLoadingMessages();
         }
+        //-------------------------------------------------------------------------------
+        function createGalacticHalo() {
+            // Create a volumetric ellipsoidal halo using particles
+            const haloParticleCount = 10000;
+            const geometry = new THREE.BufferGeometry();
+            const positions = new Float32Array(haloParticleCount * 3);
+            const colors = new Float32Array(haloParticleCount * 3);
+            const alphas = new Float32Array(haloParticleCount);
+
+            // Halo dimensions (ellipsoidal - "fat hamburger")
+            const haloRadiusXZ = config.galaxySize * 0.9; // Wider in X and Z
+            const haloRadiusY = config.galaxySize * 0.4;  // Flatter in Y (height)
+
+            for (let i = 0; i < haloParticleCount; i++) {
+                // Generate points using spherical coordinates, then scale to ellipsoid
+                const theta = Math.random() * Math.PI * 2; // azimuthal angle
+                const phi = Math.acos(2 * Math.random() - 1); // polar angle (uniform on sphere)
+                
+                // Distance from center (biased toward outer regions for halo effect)
+                const u = Math.random();
+                const r = Math.pow(u, 0.4); // Power < 1 concentrates points outward
+                
+                // Convert to Cartesian, then scale to ellipsoid
+                const x = r * Math.sin(phi) * Math.cos(theta) * haloRadiusXZ;
+                const y = r * Math.cos(phi) * haloRadiusY;
+                const z = r * Math.sin(phi) * Math.sin(theta) * haloRadiusXZ;
+                
+                positions[i * 3] = x;
+                positions[i * 3 + 1] = y;
+                positions[i * 3 + 2] = z;
+
+                // Warm yellowish-orange color (old stars in halo)
+                colors[i * 3] = 1.0;      // R
+                colors[i * 3 + 1] = 0.85; // G
+                colors[i * 3 + 2] = 0.6;  // B
+
+                // Alpha based on distance from center (more transparent toward edges)
+                const distFromCenter = Math.sqrt(x*x + y*y + z*z);
+                const maxDist = Math.sqrt(haloRadiusXZ*haloRadiusXZ + haloRadiusY*haloRadiusY);
+                alphas[i] = 1.0 - (distFromCenter / maxDist); // Fade toward edges
+            }
+
+            geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+            geometry.setAttribute('customAlpha', new THREE.BufferAttribute(alphas, 1));
+
+            const sprite = new THREE.TextureLoader().load('./images/fuzzy_circle.png');
+
+            const haloMaterial = new THREE.ShaderMaterial({
+                uniforms: {
+                    pointTexture: { value: sprite },
+                    baseOpacity: { value: 0.004 } // Very subtle
+                },
+                vertexShader: `
+                    attribute vec3 color;
+                    attribute float customAlpha;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+                    
+                    void main() {
+                        vColor = color;
+                        vAlpha = customAlpha;
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+                        gl_PointSize = 10000.0 * (1000.0 / length(mvPosition.xyz));
+                        gl_Position = projectionMatrix * mvPosition;
+                    }
+                `,
+                fragmentShader: `
+                    uniform sampler2D pointTexture;
+                    uniform float baseOpacity;
+                    varying vec3 vColor;
+                    varying float vAlpha;
+
+                    void main() {
+                        vec4 tex = texture2D(pointTexture, gl_PointCoord);
+                        if (tex.a < 0.01) discard;
+                        
+                        float finalAlpha = tex.a * vAlpha * baseOpacity;
+                        vec3 premultColor = vColor * finalAlpha;
+                        gl_FragColor = vec4(premultColor, finalAlpha);
+                    }
+                `,
+                transparent: true,
+                depthWrite: false,
+                depthTest: true,
+                blending: THREE.CustomBlending,
+                blendEquation: THREE.AddEquation,
+                blendSrc: THREE.OneFactor,
+                blendDst: THREE.OneMinusSrcAlphaFactor
+            });
+
+            const halo = new THREE.Points(geometry, haloMaterial);
+            halo.renderOrder = 20; // Render after disk but before exoplanets
+            scene.add(halo);
+            
+            return halo;
+        }
 
         //-------------------------------------------------------------------------------
         function toggleGalaxyMode(event) {
@@ -928,6 +1026,11 @@
                 scene.remove(galaxyNebula);
                 galaxyNebula = null;
             }
+            // CLEANUP: Remove the halo if it exists
+            if (galaxyHalo) {
+                scene.remove(galaxyHalo);
+                galaxyHalo = null;
+            }
 
             // Create appropriate galaxy based on selection
             switch (selectedMode) {
@@ -953,6 +1056,7 @@
                     createUnifiedCloudGalaxy()
                         .then(() => console.log("Galaxy Cloud Rendered"))
                         .catch(err => console.error("Cloud Error:", err));
+                    galaxyHalo = createGalacticHalo();
                     break;
 
                 case 'galaxy-none':
