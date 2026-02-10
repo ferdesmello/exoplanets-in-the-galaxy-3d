@@ -65,54 +65,6 @@
             overflow: hidden; /* Absolutely ensure content is hidden */
         }
 
-
-        /* Portrait or mobile mode adjustments */
-        @media (orientation: portrait) {
-            #main-title {
-                position: fixed; /* Keep title visible when scrolling */
-                top: 10px;
-                left: 50%;
-                transform: translateX(-50%); /* Center the title */
-                width: calc(100% - 40px); /* Full width with padding */
-                max-width: none; /* Remove max-width in portrait */
-                text-align: center; /* Center text within title box */
-                padding: 10px; /* Slightly less padding for compactness */
-                font-size: 1.2em;
-            }
-
-            #main-title h1 {
-                font-size: 1.4em; /* Smaller title on mobile */
-                margin-bottom: 5px;
-            }
-
-            #main-title p {
-                font-size: 1.0em; /* Smaller subtitle */
-            }
-
-            #controls {
-                position: fixed; /* Keep controls visible when scrolling */
-                top: auto; /* Remove top constraint */
-                bottom: 55px; /* Position at the bottom */
-                left: 50%;
-                transform: translateX(-50%); /* Center the controls */
-                width: calc(100% - 40px); /* Full width with padding */
-                max-width: none; /* Remove max-width in portrait */
-                z-index: 15; /* Ensure controls are always on top in mobile */
-            }
-            
-            /* For portrait, the expanded max-height can be more constrained */
-            #controls-content:not(.collapsed) {
-                max-height: 70vh; /* Adjust as needed, limits height when expanded in portrait */
-                overflow-y: auto; /* Allow scrolling when expanded if content exceeds 70vh */
-                padding-bottom: 20px; /* Add some padding at the bottom of the scrollable area */
-            }
-
-            #controls h3 {
-                justify-content: center; /* Center the "Controls" title */
-                margin-bottom: 10px; /* Add some space below the title in mobile */
-            }
-        }
-
         /* General control styling */
         #controls h3 {
             margin: 0 0 10px 0;
@@ -245,6 +197,84 @@
 
         #source-link a:hover {
             text-decoration: underline;
+        }
+
+        /* Portrait or mobile mode adjustments */
+        @media (max-width: 768px), (orientation: portrait) {
+            #main-title {
+                position: fixed; /* Keep title visible when scrolling */
+                top: 10px;
+                left: 50%;
+                transform: translateX(-50%); /* Center the title */
+                width: calc(100% - 40px); /* Full width with padding */
+                max-width: none; /* Remove max-width in portrait */
+                text-align: center; /* Center text within title box */
+                padding: 12px; /* Slightly less padding for compactness */
+            }
+
+            #main-title h1 {
+                font-size: 2.0em;
+                margin-bottom: 8px;
+            }
+
+            #main-title p {
+                font-size: 1.8em;
+            }
+
+            #controls {
+                position: fixed; /* Keep controls visible when scrolling */
+                top: auto; /* Remove top constraint */
+                bottom: 65px; /* Position at the bottom */
+                left: 50%;
+                transform: translateX(-50%); /* Center the controls */
+                width: calc(100% - 40px); /* Full width with padding */
+                max-width: none; /* Remove max-width in portrait */
+                z-index: 15; /* Ensure controls are always on top in mobile */
+                font-size: 2.0em; /* Increase overall font size in controls */
+            }
+            
+            /* For portrait, the expanded max-height can be more constrained */
+            #controls-content:not(.collapsed) {
+                max-height: 70vh; /* Adjust as needed, limits height when expanded in portrait */
+                overflow-y: auto; /* Allow scrolling when expanded if content exceeds 70vh */
+                padding-bottom: 20px; /* Add some padding at the bottom of the scrollable area */
+            }
+
+            #controls h3 {
+                justify-content: center; /* Center the "Controls" title */
+                margin-bottom: 10px; /* Add some space below the title in mobile */
+                font-size: 2.5rem;
+            }
+
+            .arrow {
+                font-size: 0.9em;
+            }
+
+            #update-date {
+                font-size: 1.5em;
+                padding: 10px 14px;
+            }
+
+            #source-link {
+                font-size: 1.5em;
+                font-weight: 600;
+                padding: 10px 14px;
+            }
+
+            /* Move loading messages to top on mobile */
+            #loading-textures,
+            #loading-mesh,
+            #loading-cloud {
+                position: fixed !important; /* Ensure fixed positioning on mobile */
+                bottom: auto !important; /* Remove bottom positioning */
+                top: 120px !important; /* Position below the title box */
+                left: 50% !important;
+                transform: translateX(-50%) !important;
+                font-size: 2.0em; /* Slightly smaller on mobile */
+                padding: 12px 20px;
+                height: auto !important; /* Ensure box doesn't stretch */
+                width: auto !important; /* Let content determine width */
+            }
         }
 
     </style>
@@ -404,6 +434,7 @@
             camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 1000000);
             renderer = new THREE.WebGLRenderer({ antialias: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
             document.body.appendChild(renderer.domElement);
 
             document.getElementById('all-checkbox')
@@ -749,8 +780,10 @@
             const nebulaTexture = await textureLoader.loadAsync('./images/MW_nebula_mask_small.png');
             const sprite = textureLoader.load('./images/fuzzy_circle.png');
 
-            const starCount = 200000; 
-            const nebulaCount = 10000;
+            const isMobile = window.matchMedia("(pointer: coarse)").matches;
+
+            const starCount = isMobile ? 50000 : 150000;
+            const nebulaCount = isMobile ? 5000: 10000;
             const totalCount = starCount + nebulaCount;
 
             const geometry = new THREE.BufferGeometry();
@@ -780,7 +813,7 @@
                 let pixelIndex = (Math.floor(ry) * cloudTexture.image.width + Math.floor(rx)) * 4;
                 let brightness = (cloudData[pixelIndex] + cloudData[pixelIndex+1] + cloudData[pixelIndex+2]) / 765;
 
-                if (Math.random() < Math.pow(brightness, 5.0)) {
+                if (Math.random() < Math.pow(brightness, 6.0)) {
                     let posX = (rx / cloudTexture.image.width - 0.5) * config.galaxySize;
                     let posZ = (ry / cloudTexture.image.height - 0.5) * config.galaxySize;
                     
@@ -857,44 +890,61 @@
             const unifiedMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     pointTexture: { value: sprite },
-                    dustOpacity: { value: 0.2 }
+                    dustOpacity: { value: isMobile ? 0.3 : 0.2 },
+
+                    starSize: { value: isMobile ? 600.0 : 300.0 },
+                    dustSize: { value: isMobile ? 900.0 : 500.0 },
+
+                    starAlphaBoost: { value: isMobile ? 2.0 : 1.0 },
+                    dustAlphaBoost: { value: isMobile ? 1.6 : 1.0 },
+
+                    pixelRatio: { value: Math.min(window.devicePixelRatio, 2) }
                 },
                 vertexShader: `
+                    uniform float pixelRatio;
+                    uniform float starSize;
+                    uniform float dustSize;
+
                     attribute float blendType;
                     attribute vec3 color;
+
                     varying vec3 vColor;
                     varying float vBlend;
+
                     void main() {
                         vColor = color;
                         vBlend = blendType;
-                        vec4 mvPosition = modelViewMatrix * vec4( position, 1.0 );
-                        float sizeScale = (vBlend > 0.5) ? 500.0 : 250.0; // dust : stars
-                        gl_PointSize = sizeScale * ( 1000.0 / length( mvPosition.xyz ) );
+
+                        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+                        float sizeScale = (vBlend > 0.5) ? dustSize : starSize;
+                        float size = sizeScale * pixelRatio * (1000.0 / length(mvPosition.xyz));
+
+                        gl_PointSize = clamp(size, 1.0, 64.0);
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
                 fragmentShader: `
                     uniform sampler2D pointTexture;
                     uniform float dustOpacity;
+                    uniform float starAlphaBoost;
+                    uniform float dustAlphaBoost;
+
                     varying vec3 vColor;
                     varying float vBlend;
 
                     void main() {
-                        vec4 tex = texture2D( pointTexture, gl_PointCoord );
+                        vec4 tex = texture2D(pointTexture, gl_PointCoord);
                         if (tex.a < 0.01) discard;
 
                         if (vBlend < 0.5) {
-                            // STARS: Very high alpha for strong occlusion
-                            float starAlpha = tex.a * 0.1;
-                            float starBrightness = 1.5;
-                            vec3 premultColor = vColor * starBrightness * starAlpha;
-                            gl_FragColor = vec4(premultColor, starAlpha);
+                            float a = tex.a * 0.1 * starAlphaBoost;
+                            vec3 col = vColor * 1.5 * a;
+                            gl_FragColor = vec4(col, a);
                         } else {
-                            // DUST: Maximum occlusion
-                            float dustAlpha = tex.a * dustOpacity;
-                            float dustBrightness = 0.5;
-                            vec3 premultColor = vColor * dustBrightness * dustAlpha;
-                            gl_FragColor = vec4(premultColor, dustAlpha);
+                            float a = tex.a * dustOpacity * dustAlphaBoost;
+                            vec3 col = vColor * 0.5 * a;
+                            gl_FragColor = vec4(col, a);
                         }
                     }
                 `,
@@ -968,9 +1018,11 @@
             const haloMaterial = new THREE.ShaderMaterial({
                 uniforms: {
                     pointTexture: { value: sprite },
-                    baseOpacity: { value: 0.004 } // Very subtle
+                    baseOpacity: { value: 0.004 }, // Very subtle
+                    pixelRatio: { value: Math.min(window.devicePixelRatio, 2) }
                 },
                 vertexShader: `
+                    uniform float pixelRatio;
                     attribute vec3 color;
                     attribute float customAlpha;
                     varying vec3 vColor;
@@ -980,7 +1032,7 @@
                         vColor = color;
                         vAlpha = customAlpha;
                         vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-                        gl_PointSize = 10000.0 * (1000.0 / length(mvPosition.xyz));
+                        gl_PointSize = 10000.0 * pixelRatio *(1000.0 / length(mvPosition.xyz));
                         gl_Position = projectionMatrix * mvPosition;
                     }
                 `,
@@ -1271,6 +1323,15 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
+
+            const dpr = Math.min(window.devicePixelRatio, 2);
+
+            if (galaxyCloud) {
+                galaxyCloud.material.uniforms.pixelRatio.value = dpr;
+            }
+            if (galaxyHalo) {
+                galaxyHalo.material.uniforms.pixelRatio.value = dpr;
+            }
         });
     </script>
 
