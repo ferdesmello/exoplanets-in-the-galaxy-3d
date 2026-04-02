@@ -3,7 +3,7 @@
 ## Overview
 Thousands of exoplanets have been discovered, most of them not so far from the Sun considering the galactic scale. This distribution is mostly because the methods used for detection can more easily detect exoplanets close to us or exoplanets with certain characteristics, not because all exoplanets are really distributed close to us. Curious about what area of our Galaxy we were able to map for exoplanets, I made this interactive visualization. You may see that, until now, we just mapped a very small region of our Galaxy.
 
-There have been <!--EXOPLANETS-->6153<!--EXOPLANETS--> exoplanets discovered around <!--STARS-->4585<!--STARS--> stars. But only <!--SDIST-->4558<!--SDIST--> of those stars have had their distance to us determined, totaling <!--PDIST-->6126<!--PDIST--> exoplanets in the visualization.
+There have been <!--EXOPLANETS-->6153<!--EXOPLANETS--> exoplanets discovered around <!--STARS-->4585<!--STARS--> stars. But only <!--SDIST-->4558<!--SDIST--> of those stars have had their distances to us determined, totaling <!--PDIST-->6126<!--PDIST--> exoplanets in the visualization.
 
 Access the interactive visualization in your browser going [here](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d/) or clicking on the image below.
 
