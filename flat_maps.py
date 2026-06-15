@@ -1,3 +1,19 @@
+"""
+Flat Maps Visualization Generator
+
+This script creates 2D flat map visualizations of exoplanet locations overlaid on
+two different views of the Milky Way:
+1. Face-on view: Projects 3D Cartesian coordinates onto a 2D plane
+2. Edge-on view: Maps galactic longitude/latitude to an equirectangular projection
+
+The script loads exoplanet coordinate data, converts them to pixel coordinates
+based on the image dimensions, and then draws green dots on both galaxy images
+to mark the exoplanet positions for visualization purposes.
+
+Output images show exoplanets as green dots on realistic Milky Way artwork,
+providing intuitive geographical context for exoplanet discoveries.
+"""
+
 from PIL import Image, ImageDraw
 
 # Reading the data---------------------------------------------------
@@ -42,7 +58,6 @@ for i in range(len(Xly)) :
     Zpx.append(1000 * (Zly[i]/68000) + 1000)
 
 #--------------------------------------------------------------------
-
 print('Reading from:', fname_eo)
 
 try:

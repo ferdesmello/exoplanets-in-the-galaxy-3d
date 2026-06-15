@@ -1,3 +1,19 @@
+
+"""
+Exoplanet Data Processor
+
+This script fetches exoplanet data from the NASA Exoplanet Archive API,
+processes it by filtering for entries with distance information, and
+converts galactic coordinates from spherical to 3D Cartesian coordinates.
+The transformed coordinates are then written to output files for visualization
+in a 3D galaxy view.
+
+Key transformations:
+- Converts parsec distances to light-years
+- Transforms galactic spherical coordinates (glat, glon) to Cartesian (X, Y, Z)
+- Applies a 90-degree counter-clockwise rotation for proper visualization alignment
+"""
+
 import urllib.request
 import json
 import ssl
@@ -8,7 +24,6 @@ import numpy as np
 
 #--------------------------------------------------------------------
 # Define the url
-
 service_url = "https://exoplanetarchive.ipac.caltech.edu/"
 
 # Ignore SSL certificate errors
@@ -25,7 +40,6 @@ url = service_url + querytap + query + ending
 
 #--------------------------------------------------------------------
 # Read the data
-
 print("Retrieving:\n", url, "\n")
 
 uh = urllib.request.urlopen(url, context=ctx)
@@ -58,7 +72,6 @@ df["glon"] = pd.to_numeric(df["glon"], errors="coerce")
 
 #--------------------------------------------------------------------
 # Print summary statistics
-
 number_of_planets = df['pname'].nunique()
 number_of_stars = df['sname'].nunique()
 methods_all = df['method'].value_counts()
@@ -80,14 +93,13 @@ print(methods_dist, "\n")
 
 #--------------------------------------------------------------------
 # Operate on data
-
 print("Operating on data")
 
 pctoly = 3.26156 # Convertion of parsec to light years
 Dcg = 26000 # Distance of the Solar System to center of the Galaxy in light years
 
-# Going from spherical galactic coordinates to cartesian and rotating
-# and 90° counter clockwise in the plane for the images
+# Going from spherical galactic coordinates to cartesian and
+# rotating 90° counter clockwise in the plane for the images
 
 # Original transformations
 df["original_X"] = df["sdist"]*pctoly*np.cos(np.radians(df["glat"]))*np.cos(np.radians(df["glon"]))-Dcg
@@ -104,7 +116,6 @@ Methods = set(df['method'])
 
 #--------------------------------------------------------------------
 # Write in the exit file
-
 fname = "./data/exoplanets_coordinates.txt"
 print("  Writing on:", fname)
 selected_columns = ['X', 'Y', 'Z']
@@ -196,7 +207,6 @@ new_content = re.sub(
 #------------------------------------
 with open(fdate, 'w', encoding='utf-8') as f:
     f.write(new_content)
-
 
 #--------------------------------------------------------------------
 print("All done.")

@@ -1,3 +1,17 @@
+"""
+Data Transformer
+
+This script converts exoplanet coordinate data from text format to JSON format.
+It processes two files:
+1. Basic coordinates (X, Y, Z) - converted to JSON for visualization
+2. Coordinates with discovery methods (X, Y, Z, method) - converted to JSON with metadata
+
+The script also adds the Solar System's position at [0, -26000, 0] to the dataset
+to provide a reference point for visualization.
+
+Output files are formatted as JSON for easy integration with web-based visualization tools.
+"""
+
 import json
 
 #--------------------------------------------------------------------

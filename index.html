@@ -1,4 +1,13 @@
 <!DOCTYPE html>
+<!--
+    Galactic Exoplanet Distribution
+
+    This page renders an interactive 3D visualization of exoplanet positions in our
+    galaxy using Three.js. It loads exoplanet coordinate data and displays them as
+    colored points, then overlays a transparent Milky Way disk or volumetric galaxy
+    representation to provide spatial context. Controls allow switching between
+    galaxy modes, toggling discovery methods, and viewing update metadata.
+-->
 <html>
 
 <head>
@@ -577,7 +586,7 @@
 
                     const material = new THREE.PointsMaterial({
                         color: methodColors[method],
-                        size: 50, // Adjust point size
+                        size: 75, // Adjust point size
                         alphaMap: circularTexture, // Apply texture
                         transparent: true, // Keep background transparent
                         alphaTest: 0.5, // Avoid rendering square edges
@@ -672,8 +681,8 @@
                     galaxyPlane.material.needsUpdate = true;
                     galaxyPlane.material.transparent = true;
                     galaxyPlane.material.opacity = 1.0;
-                    galaxyPlane.material.depthTest = false;
-                    galaxyPlane.material.depthWrite = true;
+                    galaxyPlane.material.depthTest = true;
+                    galaxyPlane.material.depthWrite = false;
                     galaxyPlane.renderOrder = 2; // Render after exoplanets
 
                 } else {
@@ -683,6 +692,7 @@
                         map: texture,
                         transparent: true,
                         opacity: 1.0,
+						depthTest: true,
                         depthWrite: true,
                         side: THREE.DoubleSide
                     });
