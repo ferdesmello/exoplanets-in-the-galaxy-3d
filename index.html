@@ -47,8 +47,8 @@
         }
 
         /* Controls box - default for wider screens */
-        #controls {
-            position: absolute; /* Default position for wide screens */
+		#controls {
+            position: absolute;
             top: 10px;
             right: 10px;
             background: rgba(0, 0, 0, 0.8);
@@ -59,6 +59,9 @@
             z-index: 11;
             max-width: 300px;
             word-wrap: break-word;
+            max-height: calc(100vh - 20px);   /* fallback for older browsers */
+            max-height: calc(100dvh - 20px);  /* accounts for mobile address-bar chrome */
+            overflow-y: auto;
         }
 
         /* Collapsible content (always applies, but overridden by .collapsed) */
@@ -239,9 +242,20 @@
                 width: calc(100% - 40px); /* Full width with padding */
                 max-width: none; /* Remove max-width in portrait */
                 z-index: 15; /* Ensure controls are always on top in mobile */
-                font-size: 2.0em; /* Increase overall font size in controls */
+                font-size: 2.5em; /* Increase overall font size in controls */
             }
-            
+
+            #controls input[type="checkbox"],
+            #controls input[type="radio"] {
+                min-width: 35px;
+                min-height: 35px;
+            }
+
+            #controls label {
+                min-height: 60px;
+                gap: 25px;
+            }
+
             /* For portrait, the expanded max-height can be more constrained */
             #controls-content:not(.collapsed) {
                 max-height: 70vh; /* Adjust as needed, limits height when expanded in portrait */
@@ -252,7 +266,7 @@
             #controls h3 {
                 justify-content: center; /* Center the "Controls" title */
                 margin-bottom: 10px; /* Add some space below the title in mobile */
-                font-size: 2.5rem;
+                font-size: 2.8rem;
             }
 
             .arrow {
@@ -268,6 +282,11 @@
                 font-size: 1.5em;
                 font-weight: 600;
                 padding: 10px 14px;
+            }
+
+			#update-date,
+            #source-link {
+                position: fixed;
             }
 
             /* Move loading messages to top on mobile */
