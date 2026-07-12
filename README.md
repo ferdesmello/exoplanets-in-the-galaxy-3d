@@ -15,6 +15,25 @@ Date of the last (automatic) update: <!--LAST_UPDATE-->2026-07-01<!--END_LAST_UP
 
 [![Interactive visualization](./images/Visualization.jpeg)](https://ferdesmello.github.io/exoplanets-in-the-galaxy-3d)
 
+## Repository structure
+
+<pre>
+├──.github/
+│  └──workflows/
+│         update.yml               # Github actions to automatize deployments
+├──data/                           # Where all the data donwloaded, reduced and transformed is stored
+├──images/                         # Where the image assets used or created are stored
+├──data_transformer.py             # Transforms the data to the format and coordinates to be used
+├──exoplanets_in_the_galaxy_3d.nb  # The original notebook. Creates transparent asset image
+├──exoplanet_data.py               # Connects to the API to donwload exoplanet data
+├──favicon.ico
+├──flat_maps.py                    # Makes simples face-on and edge-on maps of the exoplanets in the galaxy
+├──index.html                      # The static page
+├──LICENSE
+├──README.md
+└──requirements.txt
+</pre>
+  
 ## What the code does
 
 ### 1. Scraping the data
